@@ -89,6 +89,7 @@ estimAlpha=2/3
 estimG = 3
 manualTree = upgma(as.dist(t(manualDist(as.character(barcodes),estimMu,estimAlpha,estimG ))));
 manualTree$tip.label<- paste(names(barcodes),barcodes,sep="_")
+manualTree$edge.length[manualTree$edge.length<0]=0
 hc.manual=as.hclust(reverseLabels(manualTree))
 # for saving ggsave("membow_31_2tree.pdf", device=CairoPDF)
 x11()
