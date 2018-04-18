@@ -303,7 +303,7 @@ manualDist <- function(barcodeLeaves,mu,alpha,nGen){
             ratio.product = ratio.product* Pr_sister/Pr.sust
         }
     distMat[i,j]= distSum
-    ratioMat[i,j]=1/ratio.sum  #* distSum
+    ratioMat[i,j]=1/ratio.sum *distSum
     productMat[i,j] = 1/ratio.product
     }
   }
