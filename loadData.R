@@ -81,7 +81,7 @@ hc=as.hclust(reverseLabels(treeUPGMA))
 #horizontal tree using the UPGMA method
 #x11()
 #fviz_dend(hc, k = 4, cex = 0.8, horiz = TRUE,  k_colors = "jco",
-          rect = TRUE, rect_border = "jco", rect_fill = TRUE,xlab="time",ylab="cells")
+          #rect = TRUE, rect_border = "jco", rect_fill = TRUE,xlab="time",ylab="cells")
 
 
 estimMu = 0.3
