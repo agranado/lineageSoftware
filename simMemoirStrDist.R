@@ -16,10 +16,10 @@
 #mu=1/5
 #alpha= 2/3;
 
-compareDist <- function(nGen=3,mu=0.4,alpha=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
+compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
     library(doParallel)
 
-    results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist(nGen,mu,alpha,barcodeLength,methods)
+    results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist(nGen,mu,alpha,barcodeLength,methods,simulationType)
     results.matrix=do.call(rbind,results)
     #Optional when only interested in the mean
     #apply(results.matrix,2,mean)
