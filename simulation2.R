@@ -25,7 +25,7 @@ baseFreq = function(unique.BC.matrix){
 #this function creates a lineage asumming constant division rate
 #it also duplicates the barcoded scratchpad from the parent cells
 #takes thisNode as input parameter
-divideCell2<-function(thisNode,mu,alpha){
+divideCell2<-function(thisNode,mu,alpha,type='trit'){
   
 
   
@@ -60,8 +60,8 @@ divideCell2<-function(thisNode,mu,alpha){
   daughter2$barcode <-thisNode$barcode
   #then mutation happens:
   #independent events for each daughter. (extract barcode, mutate, update)
-  daughter$barcode <- mutationScratchpad(daughter$barcode,mu,alpha)
-  daughter2$barcode <- mutationScratchpad(daughter2$barcode,mu,alpha)
+  daughter$barcode <- mutationScratchpad(daughter$barcode,mu,alpha,type)
+  daughter2$barcode <- mutationScratchpad(daughter2$barcode,mu,alpha,type)
   
   
   return(thisNode)
@@ -71,18 +71,18 @@ divideCell2<-function(thisNode,mu,alpha){
 #this function acts on a tree. 
 #finds the depth of the tree and duplicates only at the leaf level
 #Effectively add one generation to the tree
-divideCellRecursive2<-function(thisNode,mu,alpha){
+divideCellRecursive2<-function(thisNode,mu,alpha,type='trit'){
     #add Child function changes the tree permanently. 
     #tree works as a global variable, all pointers represent same object
   
     #this function will add one generation to the three
     if(length(thisNode$children)==0){
       #the node is a leaf (or root)
-      divideCell2(thisNode,mu,alpha)
+      divideCell2(thisNode,mu,alpha,type)
       #this works
     }else{
       for (i in 1:length(thisNode$children)){
-        divideCellRecursive2(thisNode$children[i][[1]],mu,alpha)
+        divideCellRecursive2(thisNode$children[i][[1]],mu,alpha,type)
       }
       
     }
@@ -92,10 +92,10 @@ divideCellRecursive2<-function(thisNode,mu,alpha){
 #function to mutate the scratchpad (what memoir actually does)
 #mu is the main mutation rate: pr that a mutation happens
 #if a mutation happens, it will be u->x with pr a & u->r with pr b
-mutationScratchpad <- function(barcode,mu,alpha){
+mutationScratchpad <- function(barcode,mu,alpha,type='trit'){
     
   
-   
+    
     a=strsplit(barcode,"")[[1]]
     #now a is an array of char elements representing the scratchpad
    
@@ -110,16 +110,21 @@ mutationScratchpad <- function(barcode,mu,alpha){
           if(m_event<mu){
             trans_pr <-runif(1,0,1) #random number
              #mutually exclusive events
-              if(trans_pr<alpha){
-                a[c]="r"
-              }else{
+            
+              if(type=='trit'){
+                  if(trans_pr<alpha){
+                    a[c]="r"
+                  }else{
+                    a[c]="x"
+                  }
+              }else if(type=='binary'){
+                
                 a[c]="x"
               }
-              
-            }
-            
           }
-       }
+            
+        }
+      }
     
     #returns the mutated string
     
