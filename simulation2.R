@@ -4,6 +4,23 @@
 library(data.tree)
 
 
+#Based on profiles of unique barcodes in a tree, we estimate the proportion of each letter
+#We can use this for two things 1)estimate the number of "u" hence edit rate and 2) estimate bias between r/x edits
+baseFreq = function(unique.BC.matrix){
+  #read barcodes 
+  alphabet= c("u","r","x")
+  letterFreq=array(0,dim=c(length(alphabet),dim(unique.BC.matrix)[1]));
+  for (a in 1:length(alphabet)){
+    for (d in 1:dim(unique.BC.matrix)[1]){ letterFreq[a,d]=length(which(unique.BC.matrix[d,]==alphabet[a]));}
+    #average number of unedited barcodes across all cells (we consider only unique barcode profiles)
+    
+  }
+  meanFreq=apply(letterFreq,1,mean)
+  return(meanFreq)
+}
+
+
+
 
 #this function creates a lineage asumming constant division rate
 #it also duplicates the barcoded scratchpad from the parent cells

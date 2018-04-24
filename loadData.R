@@ -16,7 +16,7 @@ source("simulation2.R")
 source("simMemoirStrDist.R")
 filePath="/Users/alejandrog/MEGA/Caltech/trees/GraceData/"
 plotsPath="/Users/alejandrog/MEGA/Caltech/trees/GraceData/plots/"
-fileName="pos31_2"
+fileName="pos40"
 
 
 pos21tree=read.tree(file=paste(filePath,fileName,".nwk",sep=""))
@@ -83,23 +83,28 @@ hc=as.hclust(reverseLabels(treeUPGMA))
 #fviz_dend(hc, k = 4, cex = 0.8, horiz = TRUE,  k_colors = "jco",
           #rect = TRUE, rect_border = "jco", rect_fill = TRUE,xlab="time",ylab="cells")
 
+#estimate parameteres
+#statistical analysis of barcode editting 
+unique.BC.matrix=do.call(rbind, apply(t(as.character(unique(barcodes))),1,strsplit,"")[[1]]  )
+meanFreq= baseFreq(unique.BC.matrix)
+#estimated frequency of r
+estimAlpha=meanFreq[2]/sum(meanFreq[2:3])
 
-estimMu = 0.3
-estimAlpha=2/3
-estimG = 2
+estimMu = 0.5
+estimAlpha=1/2
+estimG = 1.5
 manualTree = upgma(as.dist(t(manualDist(as.character(barcodes),estimMu,estimAlpha,estimG )*10)));
 manualTree$tip.label<- paste(names(barcodes),barcodes,sep="_")
 manualTree$edge.length[manualTree$edge.length<0]=0
 hc.manual=as.hclust(reverseLabels(manualTree))
 # for saving ggsave("membow_31_2tree.pdf", device=CairoPDF)
 
-fviz_dend(hc.manual, k = 7, cex = 0.8, horiz = TRUE,  k_colors = "jco",
-          rect = TRUE, rect_border = "jco", rect_fill = TRUE,xlab="time",ylab="cells",main="manual dist")
+fviz_dend(hc.manual, k = 4, cex = 0.8, horiz = TRUE,  k_colors = "jco",
+          rect = TRUE, rect_border = "jco", rect_fill = TRUE,xlab="time",ylab="cells",main=paste("mu=",toString(estimMu)," alpha=",toString(round(estimAlpha,2))," G=",toString(estimG),  sep=""))
 
 
-#statistical analysis of barcode editting 
-unique.BC.matrix=do.call(rbind, apply(t(as.character(unique(barcodes))),1,strsplit,"")[[1]]  )
-summary(unique.BC.matrix)
+
+
 
 #plotting the real tree
 #split the name of the tips //Grace named them as 180_xx so we split using _
