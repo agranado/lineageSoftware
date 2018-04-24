@@ -30,11 +30,11 @@ compareDist <- function(nGen=3,mu=0.4,alpha=2/3,barcodeLength=6,nRepeats=20,meth
 #April 8th
 #Test stringdistance measures using the stringdist R library
 #use the same format as before but testing different methods included in the stringdist function
-simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods){
+simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='trit'){
   #load necessary libraries and functions
   library(phangorn)
   library(stringdist)
-  source("/Users/alejandrog/MEGA/Caltech/trees/simulation/simulation2.R")
+  source("/Users/alejandrog/MEGA/Caltech/trees/GIT/simulation2.R")
   pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
 
 
@@ -54,10 +54,10 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods){
 
   #all variables of the data.tree structure are global
   #any pointer to a node, points to the real tree.
-
+  
   for (g in 1:nGen){
     #this function simulates one generation of the tree
-    divideCellRecursive2(firstCell,mu,alpha)
+    divideCellRecursive2(firstCell,mu,alpha,type=simulationType)
   }
 
   #prints only the barcodes for all leaves
