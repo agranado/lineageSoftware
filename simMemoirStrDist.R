@@ -16,13 +16,14 @@
 #mu=1/5
 #alpha= 2/3;
 
-compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
-    library(doParallel)
+compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
+   
 
-    results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist(nGen,mu,alpha,barcodeLength,methods,simulationType)
+    results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist(nGen=nGen,mu=mu,alpha=alpha_,barcodeLength=barcodeLength,methods=methods,simulationType=simulationType)
     results.matrix=do.call(rbind,results)
     #Optional when only interested in the mean
     #apply(results.matrix,2,mean)
+    return(results.matrix)
 }
 
 
@@ -30,16 +31,16 @@ compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha=2/3,barcodeLen
 #April 8th
 #Test stringdistance measures using the stringdist R library
 #use the same format as before but testing different methods included in the stringdist function
-simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='trit'){
+simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   #load necessary libraries and functions
   library(phangorn)
   library(stringdist)
   source("/Users/alejandrog/MEGA/Caltech/trees/GIT/simulation2.R")
   pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
-
+  pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
 
   #clear the variable (since it behaves as global)
-  if(!exists("firstCell")){
+  if(exists("firstCell")){
     rm(firstCell)
   }
   #create intialize the tree using 1 as the ID
@@ -68,7 +69,13 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='t
   newickTree<-ToNewick(firstCell)
   #Generate unique ID for writing file to disc (we'll erase it later)
   fileID = toString(runif(1))
-  firstCellFile = paste(pathName,"trees/firstCell",fileID,".nwk",sep="")
+  
+  #firstCellFile = paste(pathName,"trees/firstCell",fileID,".nwk",sep="")
+  
+  firstCellFile =tempfile("trees/firstCell",tmpdir = pathName2)
+  firstCellFile =paste(firstCellFile,fileID,".nwk",sep="")
+  
+  
   write(newickTree,file=firstCellFile)
   #load the tree from the file as a tree structure.
   trueTree<-read.tree(file=firstCellFile)
@@ -102,8 +109,9 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='t
   #3  varName<-deparse(substitute(firstCell))
 
   fasID =toString(runif(1))
-  fasIN <-paste(pathName,"fasta/firstCell_",fasID,".fas",sep="")
-
+  #fasIN <-paste(pathName,"fasta/firstCell_",fasID,".fas",sep="")
+  fasIN =tempfile("fasta/firstCell",tmpdir = pathName2)
+  fasIN = paste(fasIN,fasID,".fas",sep="")
 
   write(fastaBarcodes,file=fasIN)
   print("writting fasta file, simulated tree")
@@ -140,12 +148,14 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='t
 
   #we can apply lineage reconstruction here so later we can compare with the real tree.
   #before loading the fasta file we need to convert the characters to DNA, so that it is compatible
-  convertMemoirToDNA(fasIN)
+  #sed.return ==1 if replacement went through (Apr 25)
+  sed.return<-convertMemoirToDNA(fasIN)
   #now we can use the phyDat
-  memoirfas<-read.phyDat(fasIN,format="fasta",type="DNA")
+  if(sed.return){
+    memoirfas<-read.phyDat(fasIN,format="fasta",type="DNA")
   #for distance based trees
   #from the phangorn tutorial pdf:
-
+  }
   #Apr 8th: this is where the distance comes into place
 
   #Apr 8th:
@@ -159,12 +169,15 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='t
   }
 
   #control against default dist.ml function + UPGMA, which so far is the best method
-  dm<-dist.ml(memoirfas)
-  dm.ham=dist.hamming(memoirfas)
-  treeUPGMA<-upgma(dm)
-  treeUPGMA_noSeq<-removeSeqLabel(treeUPGMA)
-  allDistances[m+1]= RF.dist(treeUPGMA_noSeq,trueTree)
-
+  if(sed.return==1){
+    dm<-dist.ml(memoirfas)
+    dm.ham=dist.hamming(memoirfas)
+    treeUPGMA<-upgma(dm)
+    treeUPGMA_noSeq<-removeSeqLabel(treeUPGMA)
+    allDistances[m+1]= RF.dist(treeUPGMA_noSeq,trueTree)
+  }else{
+    allDistances[m+1]= NaN
+  }
 
   #Apr 9th
   #Manual distance calculation (v beta1.0)
@@ -180,7 +193,11 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType='t
   #delete files
 
   system(paste("rm ",firstCellFile,sep=""))
-  system(paste("rm ",fasIN,sep=""))
+  if(sed.return){
+    system(paste("rm ",paste(fasIN,".bak",sep=""),sep=""))
+    system(paste("rm ",fasIN,sep=""))
+  }
+  #system(paste("rm ",fasIN,".bak",sep=""))
 
 
   return(allDistances)
