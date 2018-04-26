@@ -257,14 +257,27 @@ convertSimToPhylip <- function(barcodes){
 # sed -i .bak 's/r/g/g' protAlign24.fasta 
 convertMemoirToDNA <-function(fastaIN){
   cmds=array()
+  
+  
   cmds[1]="sed -i .bak 's/R/c/g'"
   cmds[2]="sed -i .bak 's/x/t/g'"
   cmds[3]="sed -i .bak 's/u/g/g'"
   cmds[4]="sed -i .bak 's/r/a/g'"
   
-  for(i in 1:length(cmds)){
-    system(paste(cmds[i],fastaIN,sep=" "))
+  #sometimes (I think because small delays in writting/reading files) the file is not found and the script might crash (eventhough the file is in the folder)
+  #We can check whether the file is there and execute the system commands only if this is true
+  if(file.exists(fastaIN)){
+  
+      for(i in 1:length(cmds)){
+        system(paste(cmds[i],fastaIN,sep=" "))
+      }
+      return(1)
+  }else{
+    #if the file does not exist we can read this value and return NaN (or something else)
+      return(0)
   }
+  
+  
 }
 
 
