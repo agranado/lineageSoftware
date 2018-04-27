@@ -258,11 +258,14 @@ convertSimToPhylip <- function(barcodes){
 convertMemoirToDNA <-function(fastaIN){
   cmds=array()
   
+  #edir for AWS: in ubuntu there is no space between -i and .bak. It will crash if you leave the space
+  #MacOS:  "sed -i .bak 's/x/t/g'
+  #ubuntu: "sed -i.bak 's/x/t/g'
   
-  cmds[1]="sed -i .bak 's/R/c/g'"
-  cmds[2]="sed -i .bak 's/x/t/g'"
-  cmds[3]="sed -i .bak 's/u/g/g'"
-  cmds[4]="sed -i .bak 's/r/a/g'"
+  cmds[1]="sed -i.bak 's/R/c/g'"
+  cmds[2]="sed -i.bak 's/x/t/g'"
+  cmds[3]="sed -i.bak 's/u/g/g'"
+  cmds[4]="sed -i.bak 's/r/a/g'"
   
   #sometimes (I think because small delays in writting/reading files) the file is not found and the script might crash (eventhough the file is in the folder)
   #We can check whether the file is there and execute the system commands only if this is true

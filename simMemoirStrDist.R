@@ -16,6 +16,11 @@
 #mu=1/5
 #alpha= 2/3;
 
+
+library(phangorn)
+library(stringdist)
+source("simulation2.R")
+
 compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
    
 
@@ -33,11 +38,10 @@ compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLe
 #use the same format as before but testing different methods included in the stringdist function
 simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   #load necessary libraries and functions
-  library(phangorn)
-  library(stringdist)
-  source("/Users/alejandrog/MEGA/Caltech/trees/GIT/simulation2.R")
-  pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
-  pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
+
+  
+  pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
+  pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
 
   #clear the variable (since it behaves as global)
   if(exists("firstCell")){
@@ -62,8 +66,8 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   }
 
   #prints only the barcodes for all leaves
-  print(firstCell,"barcode")
-  print("Tree simulation completed")
+  #print(firstCell,"barcode")
+  #print("Tree simulation completed")
   #save to file as newick tree
   #save the length of branches plus the ID (which so far is a number)
   newickTree<-ToNewick(firstCell)
@@ -81,7 +85,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   trueTree<-read.tree(file=firstCellFile)
 
   #file is now deleted
-  print("True tree read")
+  #print("True tree read")
   # plot(trueTree,main=paste("True tree ",sep=""))
 
   #get the sequences from the simulated tree + names
@@ -114,7 +118,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   fasIN = paste(fasIN,fasID,".fas",sep="")
 
   write(fastaBarcodes,file=fasIN)
-  print("writting fasta file, simulated tree")
+  #print("writting fasta file, simulated tree")
   #this is the format:
   #>1_uuuuuu
   #uuuuuu
@@ -187,7 +191,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
 
   allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
 
-  print("All distances calcualted")
+  #print("All distances calcualted")
 
 
   #delete files
