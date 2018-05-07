@@ -64,7 +64,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
     #this function simulates one generation of the tree
     divideCellRecursive2(firstCell,mu,alpha,type=simulationType)
   }
-
+ #PRINT TREES as they happen
   #prints only the barcodes for all leaves
   #print(firstCell,"barcode")
   #print("Tree simulation completed")
@@ -368,5 +368,5 @@ runThisScript <- function (){
 #GIT update for analyzing performance of reconstruction method with simulated data. 
 #these updates happened before the comparison between binary and tri simulations
 # code section for ATOM execution and examples
-registerDoParallel()
-results<-compareDist()
+#registerDoParallel()
+#results<-compareDist()

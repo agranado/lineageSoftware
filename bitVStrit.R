@@ -6,22 +6,29 @@
 
 #this comment was added from the RStudioServer 
 
+
 rm(list=ls())
+library(doParallel)
 source("simMemoirStrDist.R")
 source("simulation2.R")
-library(doParallel)
 registerDoParallel(cores=36)
 
+#SET PARAMETERS
 barcodes = c(2,4,6,8,10,15,20,25,50,100)
+#barcodes= c(2,3)
 generations=c(3,4,5,6,7,8)
-mus = c(0.7,0.6,0.5,0.4,0.2,0.1,0.05,0.01)
+#generations=c(3,4)
+mus = c(0.999999999,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.000000001)
 #mus = c(0.7)#,0.6)#,0.5,0.4,0.2,0.1)
-
+#mus =c(1)
 #barcodes = c(6,7)
 #generations = c(7,8)
 nRepeats=100
 
 types=c('binary','trit')
+#types=c('trit')
+
+#RUN CODE
 muVariation=list()
 for(m in 1:length(mus)){
   simType=list()
