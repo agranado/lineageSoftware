@@ -187,10 +187,18 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   #Apr 9th
   #Manual distance calculation (v beta1.0)
   matdist = manualDist(barcodeLeaves,mu,alpha,nGen)
-  manualTree =upgma(as.dist(t(exp(matdist))))
+  manualTree =upgma(as.dist(t(matdist)))
   manualTree$tip.label= treeUPGMA$tip.label
   
   allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
+  
+  #manualdist from MLfunctinos.R
+  
+  matdist_ = manualDistML(barcodeLeaves,mu,alpha,nGen)
+  manualTree_ =upgma(as.dist(t(matdist_)))
+  manualTree_$tip.label= treeUPGMA$tip.label
+  
+  allDistances[m+3]= RF.dist(removeSeqLabel(manualTree_),trueTree)
   
   print("All distances calcualted")
   
@@ -371,5 +379,5 @@ runThisScript <- function (){
 #GIT update for analyzing performance of reconstruction method with simulated data. 
 #these updates happened before the comparison between binary and tri simulations
 # code section for ATOM execution and examples
-registerDoParallel()
-results<-compareDist()
+#registerDoParallel()
+#results<-compareDist()
