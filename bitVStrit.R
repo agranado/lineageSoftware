@@ -9,8 +9,12 @@ source("simMemoirStrDist2.R")
 source("simulation2.R")
 source("MLfunctions.R")
 library(doParallel)
-
-registerDoParallel(cores=8)
+os=system("cat ../os.txt",intern = T)
+if(os=="mac"){
+  registerDoParallel(cores=8)
+}else if(os=="linux"){
+  registerDoParallel(cores=36)
+}
 
 #SET PARAMETERS
 barcodes = c(2,4,6,8,10,15,20,25,50,100)
@@ -40,7 +44,7 @@ for(m in 1:length(mus)){
        for(ng in 1:length(generations)){
           nGen=generations[ng]
           genData[[ng]]= compareDist(simulationType=simulationType,alpha_=2/3,nGen=nGen,barcodeLength=barcodeLength,mu=mu,nRepeats=nRepeats)
-
+          print(paste("sim: g=",toString(nGen)," ",simulationType," mu",toString(mu),sep=""))
        }
        barcodeData[[bc]]=genData
     }

@@ -78,8 +78,8 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   }
   
   #prints only the barcodes for all leaves
-  print(firstCell,"barcode")
-  print("Tree simulation completed")
+#  print(firstCell,"barcode")
+#  print("Tree simulation completed")
   #save to file as newick tree
   #save the length of branches plus the ID (which so far is a number)
   newickTree<-ToNewick(firstCell)
@@ -97,7 +97,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   trueTree<-read.tree(file=firstCellFile)
   
   #file is now deleted
-  print("True tree read")
+#  print("True tree read")
   # plot(trueTree,main=paste("True tree ",sep=""))
   
   #get the sequences from the simulated tree + names
@@ -130,7 +130,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   fasIN = paste(fasIN,fasID,".fas",sep="")
   
   write(fastaBarcodes,file=fasIN)
-  print("writting fasta file, simulated tree")
+#  print("writting fasta file, simulated tree")
   #this is the format:
   #>1_uuuuuu
   #uuuuuu
@@ -211,7 +211,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   
   allDistances[m+3]= RF.dist(removeSeqLabel(manualTree_),trueTree)
   
-  print("All distances calcualted")
+#  print("All distances calcualted")
   
   
   #delete files
