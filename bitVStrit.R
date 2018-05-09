@@ -44,7 +44,7 @@ for(m in 1:length(mus)){
        for(ng in 1:length(generations)){
           nGen=generations[ng]
           genData[[ng]]= compareDist(simulationType=simulationType,alpha_=2/3,nGen=nGen,barcodeLength=barcodeLength,mu=mu,nRepeats=nRepeats)
-          print(paste("sim: g=",toString(nGen)," ",simulationType," mu",toString(mu),sep=""))
+          print(paste("sim: g=",toString(nGen)," ",simulationType," mu",toString(mu)," BC=",toString(barcodeLength),sep=""))
        }
        barcodeData[[bc]]=genData
     }
