@@ -197,11 +197,13 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   
   #Apr 9th
   #Manual distance calculation (v beta1.0)
-  matdist = manualDist(barcodeLeaves,mu,alpha,nGen)
-  manualTree =upgma(as.dist(t(matdist)))
-  manualTree$tip.label= treeUPGMA$tip.label
+#  matdist = manualDist(barcodeLeaves,mu,alpha,nGen)
+#  manualTree =upgma(as.dist(t(matdist)))
+#  manualTree$tip.label= treeUPGMA$tip.label
   
-  allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
+#  allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
+  
+  allDistances[m+2]=0
   
   #manualdist from MLfunctinos.R
   
