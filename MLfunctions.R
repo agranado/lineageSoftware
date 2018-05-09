@@ -116,7 +116,7 @@ manualDistML <- function(barcodeLeaves,mu,alpha,nGen){
           
       distMat[i,j]= distSum
       ratioMat[i,j]=1/ratio.sum *distSum
-      productMat[i,j] = 1/ratio.product
+      productMat[i,j] = ratio.product
       
     }
   }
