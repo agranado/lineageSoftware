@@ -258,16 +258,28 @@ convertSimToPhylip <- function(barcodes){
 convertMemoirToDNA <-function(fastaIN){
   cmds=array()
   
+  #OS detection: SED command behaves differently in OS and linux platforms,
+  #if Mac (local branch, Alejandro's laptop)
+  #The file is NOT located in the GIT folder but in a higher folder such that it is not override or cause conflicts
+  #when merging the GIT repository
+  os=system("cat ../os.txt",intern = T)
   
-  cmds[1]="sed -i .bak 's/R/c/g'"
-  cmds[2]="sed -i .bak 's/x/t/g'"
-  cmds[3]="sed -i .bak 's/u/g/g'"
-  cmds[4]="sed -i .bak 's/r/a/g'"
-  
+  if(os=="mac"){
+    cmds[1]="sed -i .bak 's/R/c/g'"
+    cmds[2]="sed -i .bak 's/x/t/g'"
+    cmds[3]="sed -i .bak 's/u/g/g'"
+    cmds[4]="sed -i .bak 's/r/a/g'"
+  }else if(os=="linux"){ #AWS server or any other linux machine (This should work)
+    
+    cmds[1]="sed -i.bak 's/R/c/g'"
+    cmds[2]="sed -i.bak 's/x/t/g'"
+    cmds[3]="sed -i.bak 's/u/g/g'"
+    cmds[4]="sed -i.bak 's/r/a/g'"
+    
+  }
   #sometimes (I think because small delays in writting/reading files) the file is not found and the script might crash (eventhough the file is in the folder)
   #We can check whether the file is there and execute the system commands only if this is true
   if(file.exists(fastaIN)){
-  
       for(i in 1:length(cmds)){
         system(paste(cmds[i],fastaIN,sep=" "))
       }

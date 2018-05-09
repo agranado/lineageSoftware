@@ -43,10 +43,18 @@ eq.zero<-function(r,x){sum(r[,x]==0)}
 #use the same format as before but testing different methods included in the stringdist function
 simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   #load necessary libraries and functions
-
-  pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
-  pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
+  #detection of OS 
   
+  #update (trying to create a single branch that works in AWS and in my laptop)
+  os=system("cat ../os.txt",intern = T)
+  if(os=="mac"){ #local Alejandro's laptop
+    pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
+    pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
+  }else if(os=="linux"){ #AWS server or any other linux machine (path is for AWS)
+    pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
+    pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
+    
+  }
   #clear the variable (since it behaves as global)
   if(exists("firstCell")){
     rm(firstCell)
