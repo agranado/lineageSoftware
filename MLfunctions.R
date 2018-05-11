@@ -1,6 +1,6 @@
 
 #script uses the probabilistic distances/model to infer the most likely ancestor for sister cells. 
-source("simMemoirStrDist2.R")
+
 
 ml.ancenstor <-function(bc1,bc2,mu,alpha_,nGen){
   

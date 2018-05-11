@@ -18,9 +18,9 @@ auc.ecdf<-function(x){
 }
 
 
-manual.idx=12
+manual.idx=13
 upgam.idx=11
-alpha=2/3
+alpha=1/2
 
 distBit=array(0,dim=c(length(barcodes),length(generations)))
 distTrit=array(0,dim=c(length(barcodes),length(generations)))
@@ -29,7 +29,7 @@ distTrit=array(0,dim=c(length(barcodes),length(generations)))
 pathPlots="/Users/alejandrog/MEGA/Caltech/trees/simulation/plots/meetingMay1st/"
 #plot for each generation, RF dist vs BC, overlap blue and black line for trit vs bit
 #estimated edit rate 0.4 edits per site per generation
-mIdx=7
+mIdx=3
 simType=muVariation[[mIdx]]
 pdf(paste(pathPlots,"RFdist_vsBC_empiricMu_compareGenerations.pdf",sep=""))
 par(mfrow=c(2,3))
@@ -37,7 +37,7 @@ for(ng in 1:length(generations)){
   
   for(bc in 1:length(barcodes)){
     #distBit[bc,ng]=apply(simType[['binary']][[bc]][[ng]],2,mean)[11]
-    distTrit[bc,ng]=apply(simType[['trit']][[bc]][[ng]],2,mean)[12] # 12 -> RF.dist using manualDist + UPGMA
+    distTrit[bc,ng]=apply(simType[['trit']][[bc]][[ng]],2,mean)[13] # 12 -> RF.dist using manualDist + UPGMA
     distBit[bc,ng]=apply(simType[['trit']][[bc]][[ng]],2,mean)[11] #11 -> RF.dist using dist.ml + UPGMA
   }
   
@@ -119,22 +119,23 @@ pdf(paste(pathPlots,"compareSixmer_forMu_rate.pdf"))
 distBitAll=array(0,dim=c(length(barcodes),length(generations),length(mus)))
 distTritAll=array(0,dim=c(length(barcodes),length(generations),length(mus)))
 par(mfrow=c(2,3))
+BCn=2
 for(ng in 1:length(generations)){
   for (mIdx in 1:length(mus)){
     simType=muVariation[[mIdx]]
     
     for(bc in 1:length(barcodes)){
-      distBitAll[bc,ng,mIdx]=apply(simType[['binary']][[bc]][[ng]],2,mean)[12] #12 is normal UPGMA + as.dist
-      distTritAll[bc,ng,mIdx]=apply(simType[['trit']][[bc]][[ng]],2,mean)[11]
+      distBitAll[bc,ng,mIdx]=apply(simType[['trit']][[bc]][[ng]],2,mean)[11] #12 is normal UPGMA + as.dist
+      distTritAll[bc,ng,mIdx]=apply(simType[['trit']][[bc]][[ng]],2,mean)[13]
       
       
     }
   }
-  plot(mus,1-distTritAll[3,ng,]/a[ng],ylim=c(0,1),
+  plot(mus,1-distTritAll[BCn,ng,]/a[ng],ylim=c(0,1),
        type="o",col="blue",ylab="norm dist",xlab="edit rate p/site p/gen",
        main=paste("g=",toString(generations[ng]),sep=""),
        cex.axis=1.5,cex.lab=1.6,cex.main=2);
-  lines(mus,1-distBitAll[3,ng,]/a[ng],type="o")
+  lines(mus,1-distBitAll[BCn,ng,]/a[ng],type="o")
   
   #lines(mus,1-distTritAll[5,ng,]/a[ng],col="#3399FF",pch=17,lty=6)
   #lines(mus,1-distBitAll[5,ng,]/a[ng],col="gray",pch=17,lty=6)
@@ -149,11 +150,11 @@ optimMatBit=apply(distBitAll,c(1,2),min)
 
 pdf(paste(pathPlots,"histograms_tenmer_3gen_muVar.pdf"))
 par(mfrow=c(2,2))
-ng=1;bc=5
+ng=1;bc=2
 for(m in 1:4){
-  medDist = mean(1-muVariation[[m]][['trit']][[bc]][[1]][,12]/a[ng])
-  medianDist = median(1-muVariation[[m]][['trit']][[bc]][[1]][,12]/a[ng])
-  hist(1-muVariation[[m]][['trit']][[bc]][[ng]][,12]/a[ng],
+  medDist = mean(1-muVariation[[m]][['trit']][[bc]][[1]][,13]/a[ng])
+  medianDist = median(1-muVariation[[m]][['trit']][[bc]][[1]][,13]/a[ng])
+  hist(1-muVariation[[m]][['trit']][[bc]][[ng]][,13]/a[ng],
        main=paste("u=",toString(mus[m]),", <d>=",toString(medDist),", me=",toString(medianDist),sep=""),
        cex.lab=1.5,cex.axis=1.5,cex.main=1.7,
        xlab="norm distance",xlim=c(0,1),ylim=c(0,45))
