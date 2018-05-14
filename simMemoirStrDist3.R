@@ -19,6 +19,7 @@
 library(phangorn)
 library(stringdist)
 library(doParallel)
+library(gplots)
 source("simulation2.R")
 source("MLfunctions.R")
 library(gplots)
@@ -217,7 +218,8 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   allDistances[m+2]= RF.dist(removeSeqLabel(manualTree_),trueTree)
   
   #try new distance using the built in dendrogram of heatmap2
-  h=heatmap.2(matdist_)
+  #h=heatmap.2(matdist_,trace="none",dendrogram = 'column')
+  h=heatmap.2(matdist_+t(matdist_))
   heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
   heatmap.tree$tip.label = treeUPGMA$tip.label
   allDistances[m+3]= RF.dist(removeSeqLabel(heatmap.tree),trueTree)
