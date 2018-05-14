@@ -112,7 +112,7 @@ manualDistML <- function(barcodeLeaves,mu,alpha,nGen){
         }
         Pr.s1_s2[s] =sumPr
       }
-        ratio.product=log(prod(Pr.s1_s2))/log(prod(Pr.ind))
+        ratio.product=sum(log(Pr.s1_s2))/sum(log(Pr.ind))
           
       distMat[i,j]= distSum
       ratioMat[i,j]=1/ratio.sum *distSum
