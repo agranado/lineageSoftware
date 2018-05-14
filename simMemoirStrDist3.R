@@ -20,6 +20,8 @@ library(phangorn)
 library(stringdist)
 library(doParallel)
 source("simulation2.R")
+source("MLfunctions.R")
+library(gplots)
 
 compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
   
