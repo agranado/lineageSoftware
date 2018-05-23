@@ -11,7 +11,20 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   #load necessary libraries and functions
   library(phangorn)
   source("simulation2.R")
-  pathName= "/Users/alejandrog/MEGA/Caltech/trees/simulation/"
+  
+  
+  
+  os=system("cat ../os.txt",intern = T)
+  if(os=="mac"){ #local Alejandro's laptop
+    pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
+    pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
+  }else if(os=="linux"){ #AWS server or any other linux machine (path is for AWS)
+    pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
+    pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
+    
+  }
+  
+  
   #Estimate ML trees:
   #ML trees does not significantly increase the performance of lineage reconstruction
   #It does, actually, performa way worse than normal upgma/distance methods. 
