@@ -136,6 +136,14 @@ simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),
   fasIN =tempfile("fasta/firstCell",tmpdir = pathName2)
   fasIN = paste(fasIN,fasID,".fas",sep="")
   
+  #randomize the barcodes such that order is not a factor in the lineage reconstruction
+  #the real tree (because the way is constructed, has an order 1,2,3,...N), if the barcodes are not 
+  #randomized, the order will "help" to the reconstruction which is not good!
+  rand.barcode.order<-sample(1:length(fastaBarcodes))
+  
+  #We re-order the barcodes using a fixed (but random) order
+  fastaBarcodes<-fastaBarcodes[rand.barcode.order]
+  barcodeLeaves<-barcodeLeaves[rand.barcode.order]
   write(fastaBarcodes,file=fasIN)
   #  print("writting fasta file, simulated tree")
   #this is the format:
@@ -237,7 +245,7 @@ simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),
   #alternative w/o plotting the actual heatmap, only hclust method
   hclust.tree=as.phylo(hclust(as.dist(t(matdist_))))
   hclust.tree$tip.label = treeUPGMA$tip.label
-  allDistances[m+4]= RF.dist(removeSeqLabel(hclust.tree),trueTree)
+  allDistances[m+3]= RF.dist(removeSeqLabel(hclust.tree),trueTree)
 
    # print("All distances calcualted")
   
