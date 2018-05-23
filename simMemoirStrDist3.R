@@ -23,6 +23,9 @@ library(gplots)
 source("MLfunctions.R")
 source("simulation2.R")
 
+
+rand.dist<-c(10,  26,  58, 120, 250, 506)
+
 compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
   
   
@@ -39,11 +42,11 @@ eq.zero<-function(r,x){sum(r[,x]==0)}
 
 
 
-
+#nGen=3;mu=0.4;alpha=1/2;barcodeLength=10;methods=c();simulationType='trit';
 #April 8th
 #Test stringdistance measures using the stringdist R library
 #use the same format as before but testing different methods included in the stringdist function
-simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
+simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),simulationType='trit'){
   #load necessary libraries and functions
   #detection of OS 
   
@@ -218,20 +221,23 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   
   #try new distance using the built in dendrogram of heatmap2
   #h=heatmap.2(matdist_,trace="none",dendrogram = 'column')
-  # h=heatmap.2(matdist_+t(matdist_),Colv="Rowv")
-  # heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
-  # heatmap.tree$tip.label = treeUPGMA$tip.label
-  # allDistances[m+3]= RF.dist(removeSeqLabel(heatmap.tree),trueTree)
-  # 
+  h=heatmap.2(matdist_+t(matdist_),Colv="Rowv")
+  heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
+  heatmap.tree$tip.label = treeUPGMA$tip.label
+  allDistances[m+3]= RF.dist(removeSeqLabel(heatmap.tree),trueTree)
+  
   #alternative w/o plotting the actual heatmap, only hclust method
   hclust.tree=as.phylo(hclust(as.dist(t(matdist_))))
   hclust.tree$tip.label = treeUPGMA$tip.label
-  allDistances[m+3]= RF.dist(removeSeqLabel(hclust.tree),trueTree)
+  allDistances[m+4]= RF.dist(removeSeqLabel(hclust.tree),trueTree)
 
     print("All distances calcualted")
   
-    
-    
+  # allDistances[m+5] = calcDstRF(as(removeSeqLabel(treeUPGMA),'TreeMan'),as(trueTree,'TreeMan'))   
+  # allDistances[m+6] = calcDstRF(as(removeSeqLabel(manualTree_),'TreeMan'),as(trueTree,'TreeMan')) 
+  # allDistances[m+7] = calcDstRF(as(removeSeqLabel(heatmap.tree),'TreeMan'),as(trueTree,'TreeMan')) 
+  # allDistances[m+8] = calcDstRF(as(removeSeqLabel(hclust.tree),'TreeMan'),as(trueTree,'TreeMan')) 
+  # allDistances  
   
   #delete files
   
