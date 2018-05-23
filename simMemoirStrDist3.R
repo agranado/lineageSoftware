@@ -22,6 +22,8 @@ library(doParallel)
 library(gplots)
 source("MLfunctions.R")
 source("simulation2.R")
+source("MLfunctions.R")
+library(gplots)
 
 
 rand.dist<-c(10,  26,  58, 120, 250, 506)
@@ -194,7 +196,11 @@ simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),
   if(sed.return==1){
     dm<-dist.ml(memoirfas)
     dm.ham=dist.hamming(memoirfas)
-    treeUPGMA<-upgma(dm)
+    if(simulationType=='binary'){
+      treeUPGMA<-upgma(dm.ham)
+    }else{
+      treeUPGMA<-upgma(dm)
+    }
     treeUPGMA_noSeq<-removeSeqLabel(treeUPGMA)
     allDistances[m+1]= RF.dist(treeUPGMA_noSeq,trueTree)
   }else{
@@ -220,18 +226,20 @@ simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),
   allDistances[m+2]= RF.dist(removeSeqLabel(manualTree_),trueTree)
   
   #try new distance using the built in dendrogram of heatmap2
-  #h=heatmap.2(matdist_,trace="none",dendrogram = 'column')
-  h=heatmap.2(matdist_+t(matdist_),Colv="Rowv")
-  heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
-  heatmap.tree$tip.label = treeUPGMA$tip.label
-  allDistances[m+3]= RF.dist(removeSeqLabel(heatmap.tree),trueTree)
-  
+
+  h=heatmap.2(matdist_+t(matdist_),trace="none",dendrogram = 'column')
+  # h=heatmap.2(matdist_+t(matdist_),Colv="Rowv")
+  # heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
+  # heatmap.tree$tip.label = treeUPGMA$tip.label
+  # allDistances[m+3]= RF.dist(removeSeqLabel(heatmap.tree),trueTree)
+  # 
+
   #alternative w/o plotting the actual heatmap, only hclust method
   hclust.tree=as.phylo(hclust(as.dist(t(matdist_))))
   hclust.tree$tip.label = treeUPGMA$tip.label
   allDistances[m+4]= RF.dist(removeSeqLabel(hclust.tree),trueTree)
 
-    print("All distances calcualted")
+   # print("All distances calcualted")
   
   # allDistances[m+5] = calcDstRF(as(removeSeqLabel(treeUPGMA),'TreeMan'),as(trueTree,'TreeMan'))   
   # allDistances[m+6] = calcDstRF(as(removeSeqLabel(manualTree_),'TreeMan'),as(trueTree,'TreeMan')) 
