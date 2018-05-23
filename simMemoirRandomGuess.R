@@ -22,7 +22,7 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   
   
   #clear the variable (since it behaves as global)
-  if(!exists("firstCell")){
+  if(exists("firstCell")){
     rm(firstCell)
   }
   #create intialize the tree using 1 as the ID
@@ -45,7 +45,7 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   }
   
   #prints only the barcodes for all leaves
-  print(firstCell,"barcode")
+ # print(firstCell,"barcode")
   print("Tree simulation completed")
   #save to file as newick tree
   #save the length of branches plus the ID (which so far is a number)
@@ -65,7 +65,7 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   randDist = array()
   for (r in 1:nRand){
     randomTrue<- randomTrueTree(trueTree)
-    randDist[r]=treedist(randomTrue,trueTree)
+    randDist[r]=RF.dist(randomTrue,trueTree)
   }
   
   
