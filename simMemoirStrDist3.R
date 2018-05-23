@@ -193,7 +193,11 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   if(sed.return==1){
     dm<-dist.ml(memoirfas)
     dm.ham=dist.hamming(memoirfas)
-    treeUPGMA<-upgma(dm)
+    if(simulationType=='binary'){
+      treeUPGMA<-upgma(dm.ham)
+    }else{
+      treeUPGMA<-upgma(dm)
+    }
     treeUPGMA_noSeq<-removeSeqLabel(treeUPGMA)
     allDistances[m+1]= RF.dist(treeUPGMA_noSeq,trueTree)
   }else{
@@ -219,7 +223,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   allDistances[m+2]= RF.dist(removeSeqLabel(manualTree_),trueTree)
   
   #try new distance using the built in dendrogram of heatmap2
-  #h=heatmap.2(matdist_,trace="none",dendrogram = 'column')
+  h=heatmap.2(matdist_+t(matdist_),trace="none",dendrogram = 'column')
   # h=heatmap.2(matdist_+t(matdist_),Colv="Rowv")
   # heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
   # heatmap.tree$tip.label = treeUPGMA$tip.label
@@ -230,7 +234,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   hclust.tree$tip.label = treeUPGMA$tip.label
   allDistances[m+3]= RF.dist(removeSeqLabel(hclust.tree),trueTree)
 
-    print("All distances calcualted")
+   # print("All distances calcualted")
   
     
     
