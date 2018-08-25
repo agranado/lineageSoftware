@@ -5,31 +5,34 @@
 #runs in parallel.
 
 rm(list=ls())
-source("simMemoirStrDist2.R")
+library(gplots)
+source("simMemoirStrDist3.R")
 source("simulation2.R")
 source("MLfunctions.R")
 library(doParallel)
+
+#request number of CPUs accordingly 
 os=system("cat ../os.txt",intern = T)
 if(os=="mac"){
   registerDoParallel(cores=8)
 }else if(os=="linux"){
-  registerDoParallel(cores=36)
+  registerDoParallel(cores=72)
 }
 
 #SET PARAMETERS
-barcodes = c(2,4,6,8,10,15,20,25,50,100)
-barcodes= c(6,10,50)
-generations=c(3,4,5,6,7,8)
+barcodes = c(2,4,6,8,10,12,15,17,20,30,40,50,60,70,80,100,200)
+#barcodes= c(2,10,50,100)
+generations=c(2,3,4,5,6,7,8,9,10)
 #generations=c(8)
-mus = c(0.9999,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0001)
-#mus = c(0.7)#,0.6)#,0.5,0.4,0.2,0.1)
-mus =c(0.999999)
+mus = c(0.4,0.3,0.2,0.1,0.001)
+#mus = c(0.99,0.6,0.5,0.4,0.1,0.01)
+#mus=c(0.99,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.01,0.001)
 #barcodes = c(6,7)
-#generations = c(7,8)
-nRepeats=5
+#generations = c(3,4,5)
+nRepeats=72
 
 types=c('binary','trit')
-types=c('trit')
+#types=c('trit')
 
 muVariation=list()
 for(m in 1:length(mus)){
@@ -43,7 +46,7 @@ for(m in 1:length(mus)){
        genData=list()
        for(ng in 1:length(generations)){
           nGen=generations[ng]
-          genData[[ng]]= compareDist(simulationType=simulationType,alpha_=2/3,nGen=nGen,barcodeLength=barcodeLength,mu=mu,nRepeats=nRepeats)
+          genData[[ng]]= compareDist(simulationType=simulationType,alpha_=1/2,nGen=nGen,barcodeLength=barcodeLength,mu=mu,nRepeats=nRepeats)
           print(paste("sim: g=",toString(nGen)," ",simulationType," mu",toString(mu)," BC=",toString(barcodeLength),sep=""))
        }
        barcodeData[[bc]]=genData
@@ -51,4 +54,5 @@ for(m in 1:length(mus)){
     simType[[simulationType]]=barcodeData
   }
   muVariation[[m]]=simType
+  save(muVariation,file=paste("muVar_mu_",toString(mu),"_.rda",sep=""))
 }
