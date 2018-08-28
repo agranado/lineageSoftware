@@ -58,9 +58,12 @@ simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),
     pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
     pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
   }else if(os=="linux"){ #AWS server or any other linux machine (path is for AWS)
-    pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
-    pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
-    
+    #pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
+    #pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
+   
+    pathName = "/home/alejandrog/MEGA/Caltech/lineage/"
+    pathName2= "/home/alejandrog/MEGA/Caltech/lineage"
+ 	 
   }
   #clear the variable (since it behaves as global)
   if(exists("firstCell")){
