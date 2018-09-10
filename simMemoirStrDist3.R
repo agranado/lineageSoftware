@@ -58,12 +58,14 @@ simMemoirStrdist<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,methods=c(),
     pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
     pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
   }else if(os=="linux"){ #AWS server or any other linux machine (path is for AWS)
-    #pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
-    #pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
-   
     pathName = "/home/alejandrog/MEGA/Caltech/lineage/"
     pathName2= "/home/alejandrog/MEGA/Caltech/lineage"
  	 
+  }else if(os=="linux_local"){
+    #linux desktop   
+    file.dir = "/home/alejandrog/MEGA/Caltech/trees/GraceData/integrase-data/10mer/"
+    setwd("/home/alejandrog/MEGA/Caltech/trees/macbookBranch/lineageSoftware")
+    #At this point we are supposed to be in the local branch already, because we read the os.txt...
   }
   #clear the variable (since it behaves as global)
   if(exists("firstCell")){
