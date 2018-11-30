@@ -49,6 +49,7 @@ manualDistML <- function(barcodeLeaves,mu,alpha,nGen){
   #transition probabilities
 
   #this is of the form i,j   Pr(i->j | i)
+  #if(alpha==0){ alpha = 1e-6} else if (alpha==1){alpha = 0.999999}  
   Tran.pr = t(matrix(c(1-mu, mu*alpha,mu*(1-alpha),0,1,0,0,0,1),nrow=3,ncol=3))
 
 
