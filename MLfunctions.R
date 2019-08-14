@@ -13,9 +13,12 @@ ml.ancenstor <-function(bc1,bc2,mu,alpha_,nGen){
 Pr_edit <- function (nGen,mu,alpha){
   #probability that at nGen generations there is a mutation
   cumSum =0
-  for (nG in 1:nGen){
-    cumSum = cumSum + mu * (1-mu)^(nG-1) * alpha
-  }
+  if(nGen>0)
+    for (nG in 1:nGen)
+      cumSum = cumSum + mu * (1-mu)^(nG-1) * alpha
+  else
+    cumSum =0
+    
   return(cumSum)
 }
 
@@ -27,14 +30,14 @@ Pr_noedit<-function(nGen,mu){
 #works fine as May 8th
 
 Pr_s0<-function(a,mu,alpha,nGen){
-  if(a=="u"){
+  if(a=="u")
     pr = Pr_noedit(nGen,mu)
-  }else if(a=="r"){
+  else if(a=="r")
     pr =Pr_edit(nGen,mu,alpha)
-  }else {
+  else
     pr =Pr_edit(nGen,mu,1-alpha)
-  }
 
+  return(pr)
 }
 
 
@@ -149,7 +152,10 @@ manualDistML <- function(barcodeLeaves,mu,alpha,nGen){
             #sum over all possible S0 states
             sumPr=0
             for(a in 1:length(alphabet)){
-               sumPr = sumPr+ Tran.pr[a,s1] * Tran.pr[a,s2] * Pr_s0_array[a]   # Pr_s0(alphabet[a],mu,alpha,nGen-1)
+               sumPr = sumPr+ Tran.pr[a,s1] * Tran.pr[a,s2] * Pr_s0_array[a]
+                #   All possible ways in which the sisters s1, s2 could be generated from a previous state.
+                #   The sum is all over possible states of S0, weighted by their proabilities.
+                #   Pr_{g-1}(S_0) x Pr_{g}(S_0->S_1) x P_{g}(S_0->S_2)  # Pr_s0(alphabet[a],mu,alpha,nGen-1)
             }
         }
         Pr.s1_s2[s] =sumPr
