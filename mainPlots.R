@@ -23,7 +23,7 @@ source("simMemoirRandomGuess.R")
  #   b[ng,]=simMemoirRandomGuess(generations[ng],mu,alpha,barcodes[1],nRepeats)
  #   a[ng] = median(b[ng,])
  # }
-a=c(2    ,9,   26,   58,  122,  250,  506, 1018, 2042)
+a=c(2    ,10,   26,   58,  122,  250,  506, 1018, 2042)
 
 
 #this function calculates the area under the curve of the ecdf of the vector. In this case, the cumulative fraction
