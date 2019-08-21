@@ -338,3 +338,41 @@ makePlotAccuracy<-function(plot.only = T,nrepeats=10){
   legend(0,0.5,legend = c("intMEMOIR", "sim 10mer","sim 20mer","random guees"), fill = c("black","grey","blue","red"))
 
 }
+
+
+# calculate entropy in barcodes and see whether that predicts reconstruction accuracy
+
+#simple calculation of shannon entropy per site
+# Returns the vector for entropies for each site
+barcodeEntropy<-function( ground_truth ){
+
+  barcodes = str_split(ground_truth$tip.label,"_",simplify=T)[,2]
+  barcode_matrix<-do.call(rbind,lapply(lapply(barcodes,str_split,"",simplify=T),as.numeric))
+
+  for(i in 1:dim(barcode_matrix)[2]){
+      h[i]=entropy(table(barcode_matrix[,i])/dim(barcode_matrix)[1])
+  }
+
+  return(h)
+}
+
+entropyAllTrees<-function(i){
+
+      res = inspect.tree(i,return.tree = T, clust.method = "diana",plot.all = F)
+      if(length(res)>0){
+          ground_truth = res[[8]]
+
+          h = sum(barcodeEntropy(ground_truth))
+          memoir  = as.numeric(res[[4]] )
+          membow = as.numeric( res[[5]])
+          ncells = as.numeric( res[[3]])
+          id = as.numeric( res[[2]])
+
+
+
+      return(list(id,ncells,memoir,membow,h))
+    }else{
+      return(NULL)
+    }
+
+}
