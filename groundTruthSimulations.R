@@ -112,7 +112,7 @@ runAllMetrics<-function(id, n_repeats =10,n_barcodes=10){
   }
 
 
-  res = inspect.tree(id, return.tree = T,plot.all=F)
+  res = inspect.tree(id, return.tree = T,plot.all=F,clust.method="diana")
   ground_truth = res[[8]]
 
   if(length(res)>0){
