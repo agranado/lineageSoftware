@@ -101,7 +101,7 @@ runAllMetrics<-function(id, n_repeats =10,n_barcodes=10){
   #it has to be automated to analyse all data
 
   # We first compute the global parameteres
-  params_global = estim.params.global(estimG = 4, fil = "../integrase-data/10mer_2019/editRate/allBarcodes.txt")
+  params_global = estim.params.global(estimG = 4, file = paste("../", integrase_folder,"10mer_2019/editRate/allBarcodes.txt",sep = ""))
   mu = params_global[[1]]
   alpha = params_global[[2]]
 
