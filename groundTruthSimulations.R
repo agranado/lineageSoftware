@@ -69,7 +69,8 @@ recIntegrase_2019<-function(barcode,mu,alpha,type = "trit"){
 #Global parameters:
 #Experimentally measured edit rates
 
-params_global = estim.params.global(estimG = 4, fil = "../integrase-data/10mer_2019/editRate/allBarcodes.txt")
+#params_global = estim.params.global(estimG = 4, fil = "../integrase-data/10mer_2019/editRate/allBarcodes.txt")
+params_global = estim.params.global(estimG = 4, fil = "../GraceData/10mer_2019/editRate/allBarcodes.txt")
 mu = params_global[[1]]
 alpha = params_global[[2]]
 
@@ -96,8 +97,10 @@ pipelineSim<-function(ground_truth,mu,alpha){
 }
 
 runAllMetrics<-function(id, n_repeats =10,n_barcodes=10){
+  #this simulation works at the tree level
+  #it has to be automated to analyse all data
 
-
+  # We first compute the global parameteres
   params_global = estim.params.global(estimG = 4, fil = "../integrase-data/10mer_2019/editRate/allBarcodes.txt")
   mu = params_global[[1]]
   alpha = params_global[[2]]
