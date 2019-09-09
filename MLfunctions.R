@@ -18,7 +18,7 @@ Pr_edit <- function (nGen,mu,alpha){
       cumSum = cumSum + mu * (1-mu)^(nG-1) * alpha
   else
     cumSum =0
-    
+
   return(cumSum)
 }
 
