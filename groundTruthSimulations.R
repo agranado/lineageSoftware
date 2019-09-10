@@ -7,7 +7,7 @@
 # we don't need to simulate the lineage but just follow it.
 # use the 10mer and simulate the edits with experimentally-measured parameteres
 # parameters are trit-dependent and therefore each unit has its own mu, alpha
-library(entropy)
+
 # old functions (simplified for this particular situation)
 mutationScratchpad_2019 <- function(barcode,mu,alpha,type='trit',recType="integrase",cInts=1,tInts=1,chr.acc=c()){
 
@@ -70,7 +70,7 @@ recIntegrase_2019<-function(barcode,mu,alpha,type = "trit"){
 #Experimentally measured edit rates
 
 #params_global = estim.params.global(estimG = 4, fil = "../integrase-data/10mer_2019/editRate/allBarcodes.txt")
-params_global = estim.params.global(estimG = 4, fil = paste("../",integrase_folder,"10mer_2019/editRate/allBarcodes.txt",sep=""))
+params_global = estim.params.global(estimG = 4, fil = "../GraceData/10mer_2019/editRate/allBarcodes.txt")
 mu = params_global[[1]]
 alpha = params_global[[2]]
 
@@ -97,40 +97,39 @@ pipelineSim<-function(ground_truth,mu,alpha){
 }
 
 runAllMetrics<-function(id, n_repeats =10,n_barcodes=10){
-    #this simulation works at the tree level
-    #it has to be automated to analyse all data
+  #this simulation works at the tree level
+  #it has to be automated to analyse all data
 
-    # We first compute the global parameteres
-    params_global = estim.params.global(estimG = 4, file = paste("../", integrase_folder,"10mer_2019/editRate/allBarcodes.txt",sep = ""))
-    mu = params_global[[1]]
-    alpha = params_global[[2]]
-
-
-    if(n_barcodes>10){
-        mu = rep(mu, ceiling(n_barcodes/10))
-        alpha = rep(alpha,ceiling(n_barcodes/10))
-    } # Here we assume that edit rate will be the same for multiple arrays
+  # We first compute the global parameteres
+  params_global = estim.params.global(estimG = 4, file = paste("../", integrase_folder,"10mer_2019/editRate/allBarcodes.txt",sep = ""))
+  mu = params_global[[1]]
+  alpha = params_global[[2]]
 
 
-    res = inspect.tree(id, return.tree = T,plot.all=F,clust.method="diana")
-    #We only need the ground truth to run the rest of code
-    ground_truth = res[[8]]
+  if(n_barcodes>10){
+      mu = rep(mu, ceiling(n_barcodes/10))
+      alpha = rep(alpha,ceiling(n_barcodes/10))
+  }
 
-    if(length(res)>0){
-        d_membow = c()
-        d_memoir = c()
-        for(i in 1:n_repeats){
-          this_node  =   initSimulation(ground_truth,initial_barcode = paste(rep("1",n_barcodes),collapse=""))
-          ground_sim =   simulateGroundTruth(this_node,mu = mu, alpha = alpha)
-          ground_phylo = convertToPhylo(ground_sim, ground_truth)
-          manualTree = reconstructSimulation(ground_phylo, mu,alpha,return_tree = T)
-          d_membow[i] = reconstructMembow(ground_phylo,manualTree,mu, alpha)
-          d_memoir[i] = 1-RF.dist(ground_phylo,manualTree,normalize = T)
-        }
-        return(list(d_membow,d_memoir,length(ground_phylo$tip.label)))
-    }else{
-        return(NULL)
-    }
+
+  res = inspect.tree(id, return.tree = T,plot.all=F,clust.method="diana")
+  ground_truth = res[[8]]
+
+  if(length(res)>0){
+      d_membow = c()
+      d_memoir = c()
+      for(i in 1:n_repeats){
+        this_node  =   initSimulation(ground_truth,initial_barcode = paste(rep("1",n_barcodes),collapse=""))
+        ground_sim =   simulateGroundTruth(this_node,mu = mu, alpha = alpha)
+        ground_phylo = convertToPhylo(ground_sim, ground_truth)
+        manualTree = reconstructSimulation(ground_phylo, mu,alpha,return_tree = T)
+        d_membow[i] = reconstructMembow(ground_phylo,manualTree,mu, alpha)
+        d_memoir[i] = 1-RF.dist(ground_phylo,manualTree,normalize = T)
+      }
+      return(list(d_membow,d_memoir,length(ground_phylo$tip.label)))
+  }else{
+      return(NULL)
+  }
 }
 
 # Get the data.tree object ready starting from a phylo object (ground truth)
@@ -242,7 +241,7 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha){
   unique.genotypes = unique(substr(manualTree$tip.label,4,14))
 
   # check that tree has more that two unique leafs
-  if(length(unique.genotypes)>4){
+  if(length(unique.genotypes)>2){
 
     new.tree = manualTree
     new.alive.tree = ground_phylo
@@ -260,28 +259,31 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha){
             }
 
         }
+        if(length(new.tree$tip.label)>3){
+          this.score = 1-RF.dist(new.tree,new.alive.tree,normalize = T)
+        }else{this.score = -1}
         #now we have trees with unique leaves
-        barcodes_ = new.tree$tip.label
-        barcodes.raw  =  substr(barcodes_,4,14)
-        barcodes.raw = str_replace_all(barcodes.raw, c("2" = "r", "1" = "u","0"="x"))
-
-
-        # using global parameters
-        matdist_2 = manualDistML_2(barcodes.raw,estimMu,estimAlpha,3)
-        colnames(matdist_2)<- substr(barcodes_,4,14); row.names(matdist_2)<- substr(barcodes_,4,14)
-        new.tree = as.phylo(as.hclust(diana(as.dist(t(matdist_2)))))
-
-        new.alive.tree_ = new.alive.tree;
-        new.alive.tree_$tip.label = substr(new.alive.tree$tip.label,4,14)
-
-        this.score = 1-RF.dist(new.alive.tree_,new.tree,normalize = T) #RF distance without number ID may20
-
-        if(is.na(this.score)){
-          #add a root to the tree, based on the initial state of the barcodes: 1111...1
-          #then calcualte the distance using RF(x, root = T)
-          this.score = 1-RF.dist(root(add.tips(new.tree, "1111111111", 4),"1111111111"),
-              root(add.tips(new.alive.tree_, "1111111111", 4),"1111111111"),normalize = T,rooted = T)
-        }
+        # barcodes_ = new.tree$tip.label
+        # barcodes.raw  =  substr(barcodes_,4,14)
+        # barcodes.raw = str_replace_all(barcodes.raw, c("2" = "r", "1" = "u","0"="x"))
+        #
+        #
+        # # using global parameters
+        # matdist_2 = manualDistML_2(barcodes.raw,estimMu,estimAlpha,3)
+        # colnames(matdist_2)<- substr(barcodes_,4,14); row.names(matdist_2)<- substr(barcodes_,4,14)
+        # new.tree = as.phylo(as.hclust(diana(as.dist(t(matdist_2)))))
+        #
+        # new.alive.tree_ = new.alive.tree;
+        # new.alive.tree_$tip.label = substr(new.alive.tree$tip.label,4,14)
+        #
+        # this.score = 1-RF.dist(new.alive.tree_,new.tree,normalize = T) #RF distance without number ID may20
+        #
+        # if(is.na(this.score)){
+        #   #add a root to the tree, based on the initial state of the barcodes: 1111...1
+        #   #then calcualte the distance using RF(x, root = T)
+        #   this.score = 1-RF.dist(root(add.tips(new.tree, "1111111111", 4),"1111111111"),
+        #       root(add.tips(new.alive.tree_, "1111111111", 4),"1111111111"),normalize = T,rooted = T)
+        # }
 
 
   }else{this.score = -1} #main IF end
@@ -352,7 +354,7 @@ barcodeEntropy<-function( ground_truth ){
 
   barcodes = str_split(ground_truth$tip.label,"_",simplify=T)[,2]
   barcode_matrix<-do.call(rbind,lapply(lapply(barcodes,str_split,"",simplify=T),as.numeric))
-  h = c()
+
   for(i in 1:dim(barcode_matrix)[2]){
       h[i]=entropy(table(barcode_matrix[,i])/dim(barcode_matrix)[1])
   }
