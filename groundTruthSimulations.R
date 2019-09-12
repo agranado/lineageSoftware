@@ -236,7 +236,11 @@ reconstructSimulation<-function(ground_phylo,mu,alpha,return_tree = F){
 
 }
 
-reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha){
+# UPDATE this version only removes leaves and does not perform a second round of Reconstruction
+# Only when the MEMO trees are less than min.memo.tree cells, we are going to reconstruct the barcodes again
+# DIANA clustering might be biased when too many identical genotypes
+# min.memo.tree = 3 means NO second round of reconstruction DEFAULT
+reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_tree = F,min.memo.tree = 3,nGen = 4){
 
   unique.genotypes = unique(substr(manualTree$tip.label,4,14))
 
@@ -259,7 +263,14 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha){
             }
 
         }
+
+
         if(length(new.tree$tip.label)>3){
+          # if after removing leaves we are left with only a few number of unique genotypes
+          # we might want to re-reconstruct the barcodes using ward.D2 as DIANA does not work as well with too few cells
+          if(length(new.alive.tree$tip.label)< min.memo.tree)
+            new.tree = reconstructLineage(new.alive.tree,mu,alpha,return_tree=T,clust.method="ward.D2",nGen = nGen)
+
           this.score = 1-RF.dist(new.tree,new.alive.tree,normalize = T)
         }else{this.score = -1}
         #now we have trees with unique leaves
@@ -288,7 +299,11 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha){
 
   }else{this.score = -1} #main IF end
 
-  return(this.score)
+  if(!return_tree){
+    return(this.score)
+  }else{
+    return(list(new.alive.tree,new.tree))
+  }
 }
 
 
