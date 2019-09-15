@@ -264,7 +264,8 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_t
 
         }
 
-
+        # If there are only 3 unique genotypes there is no point in reconstructing the tree
+        # since the RF distance is not well defined for n=3
         if(length(new.tree$tip.label)>3){
           # if after removing leaves we are left with only a few number of unique genotypes
           # we might want to re-reconstruct the barcodes using ward.D2 as DIANA does not work as well with too few cells
