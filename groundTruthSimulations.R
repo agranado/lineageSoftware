@@ -1,11 +1,30 @@
 # Aug 14th 2019
 # Integrase paper writing
-# Goal: simulate recording for known lineages
-# Establish a baseline for reconstruction
+#
+# Simulation is restricted to toplogies that are observed experimentally
+# Goal: Establish a baseline for reconstruction accuracy
 
-# functions for simulating trees that are restricted to a given topology.
-# we don't need to simulate the lineage but just follow it.
-# use the 10mer and simulate the edits with experimentally-measured parameteres
+
+# Set up the full path for the data
+# Barcode data is in the folder FISH/
+# Main folder is ../integrase_folder/10mer_2019/
+if(length(grep("linux",read.table("../os.txt")$V1))){
+    source("../integrase-data/RF.experiment.R")
+    integrase_folder= "integrase-data/" # For Ubuntu
+    file.path=paste("/home/agranado/MEGA/Caltech/trees/",integrase_folder,"10mer_2019/",sep="") # Ubuntu
+
+}else{
+    source("../GraceData/RF.experiment.R")
+    integrase_folder = "GraceData/"     # For Mac
+    file.path=paste("/users/alejandrog/MEGA/Caltech/trees/",integrase_folder,"10mer_2019/",sep="") # Mac
+}
+
+
+
+
+# Functions for simulation of recording restricted to a given topology.
+# we don't need to simulate the lineage but just follow the one that was observed in the experiment.
+# use the 10mer (10 recording units) and simulate the edits with experimentally-measured parameteres
 # parameters are trit-dependent and therefore each unit has its own mu, alpha
 
 # old functions (simplified for this particular situation)
@@ -66,11 +85,13 @@ recIntegrase_2019<-function(barcode,mu,alpha,type = "trit"){
 
 }
 
-#Global parameters:
-#Experimentally measured edit rates
 
-#params_global = estim.params.global(estimG = 4, fil = "../integrase-data/10mer_2019/editRate/allBarcodes.txt")
-params_global = estim.params.global(estimG = 4, fil = "../GraceData/10mer_2019/editRate/allBarcodes.txt")
+
+# GLOBAL parameters:
+#Experimentally measured edit rates per site
+
+# GLOBAL PARAMETERS
+params_global = estim.params.global(estimG = 4, fil = paste("../",integrase_folder,"10mer_2019/editRate/allBarcodes.txt",sep=""))
 mu = params_global[[1]]
 alpha = params_global[[2]]
 
@@ -96,7 +117,67 @@ pipelineSim<-function(ground_truth,mu,alpha){
   return(d)
 }
 
-runAllMetrics<-function(id, n_repeats =10,n_barcodes=10){
+
+# UPDATE Sep 16th 2019
+# From the reconstruction scripts we create a memoirData structure with
+# Using default parameters
+# process.all.files(files_to_process) %>% reconstruct.all.lineages() -> memoirData
+# memoirData is a dataframe with the ground truth trees and some statistics
+# To perform simulation we just need to take the lineages and so we can jus extract that from the df
+# memoirData includes only trees that have been filtered by quality / number of cells
+
+# if MEMO mode is T , then we remove duplicated barcodes and reconstruct the lineage of "clones"
+runAllMetrics<-function(id,memoirData = c(), n_repeats=10,n_barcodes=10,MEMO = F){
+  print(paste( "processing tree", toString(id)))
+  # in memoirData, lineages with 3 cells have score NA
+  if(!MEMO){
+    ground_truth = read.newick(text = as.character(memoirData$ground[id]))
+  }else{
+    ground_truth = read.newick(text = as.character(memoirData$MEMOtrees[id]))
+  }
+
+  # After converting the trees to MEMO mode, some are left with only 2 tips
+  # We return NULL if the tree already was classified as NA or if they are <3 leaves after MEMO
+  if(!is.na(memoirData$RF[id]) & length(ground_truth$tip.label)>3){
+
+
+      if(n_barcodes>10){
+          mu = rep(mu, ceiling(n_barcodes/10))
+          alpha = rep(alpha,ceiling(n_barcodes/10))
+      }
+
+      d_membow = c()
+      d_memoir = c()
+      d_recursive = c()
+      for(i in 1:n_repeats){
+        this_node  =   initSimulation(ground_truth,initial_barcode = paste(rep("1",n_barcodes),collapse=""))
+        ground_sim =   simulateGroundTruth(this_node,mu = mu, alpha = alpha)
+        ground_phylo = convertToPhylo(ground_sim, ground_truth)
+        manualTree = reconstructLineage(ground_phylo, mu,alpha,return_tree = T,clust.method="diana")
+
+        d_memoir[i] = 1-RF.dist(ground_phylo,manualTree,normalize = T)
+
+        #Try recursive reconstruction with the simulation data (update Sep 16th)
+        manualTree_recursive = recursiveReconstruction(manualTree,mu = mu,alpha = alpha)
+        d_recursive[i] =1- RF.dist( manualTree_recursive,ground_phylo,normalize = T)
+
+        # New membow distance (no second round of reconstruction)
+        d_membow[i] = reconstructMembow(ground_phylo,manualTree_recursive,mu, alpha)
+
+
+      }
+      return(list(d_membow,d_memoir,d_recursive , length(ground_phylo$tip.label)))
+
+
+
+  }else{
+    return(NULL)
+  }
+
+
+}
+
+runAllMetrics_v0.1<-function(id, n_repeats =10,n_barcodes=10){
   #this simulation works at the tree level
   #it has to be automated to analyse all data
 
@@ -173,6 +254,11 @@ simulateGroundTruth <- function(this_node,mu,alpha){
   return(this_node)
 }
 
+
+# END MAIN SIMULATION
+
+
+#
 # This function will get the barcode data from the simulated lineage
 printBarcodes<-function(ground_sim){
   # Get all the leaves from the tree
@@ -298,34 +384,50 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_t
         # }
 
 
-  }else{this.score = -1} #main IF end
+  }else{this.score = -1; new.alive.tree = ground_phylo; new.tree = manualTree} #main IF end
 
   if(!return_tree){
     return(this.score)
   }else{
-    return(list(new.alive.tree,new.tree))
+    return(list(new.alive.tree,new.tree,this.score))
   }
 }
 
 
-randomControl <- function(id,nrepeats = 10){
+randomControl <- function(id,memoirData, nrepeats = 10,MEMO = F){
   # This function will take a ground truth lineage given by the id
   # We are going to do random guess reconstruction which means just shuffling the leaves of the three
   # this, however assumes that we know the topology and we only want to put the barcodes in the right order.
   # Given that some topologies are easier to reconstruct than other, this assumption takes care of trivial reconstruction
   # since random guess will be probably as good as actual reconstruction
 
-
-  res = inspect.tree(id, return.tree = T,plot.all=F)
-  ground_truth = res[[8]]
-  rand_dist=c()
-  for(i in 1:nrepeats){
-      ground_rand = ground_truth
-      ground_rand$tip.label = sample(ground_rand$tip.label)
-      rand_dist[i]=1-RF.dist(ground_truth,ground_rand,normalize=T)
-
+  # in memoirData, lineages with 3 cells have score NA
+  if(!MEMO){
+    ground_truth = read.newick(text = as.character(memoirData$ground[id]))
+  }else{
+    ground_truth = read.newick(text = as.character(memoirData$MEMOtrees[id]))
   }
-  return(rand_dist)
+
+  if(!is.na(memoirData$RF[id]) & length(ground_truth$tip.label)>3){
+
+
+
+  # res = inspect.tree(id, return.tree = T,plot.all=F)
+  # ground_truth = res[[8]]
+
+
+    rand_dist=c()
+    for(i in 1:nrepeats){
+        ground_rand = ground_truth
+        ground_rand$tip.label = sample(ground_rand$tip.label)
+        rand_dist[i]=1-RF.dist(ground_truth,ground_rand,normalize=T)
+
+    }
+    return(rand_dist)
+
+  }else{
+    return(NULL)
+  }
 
 }
 
