@@ -1,9 +1,19 @@
+
 # Aug 14th 2019
 # Integrase paper writing
 #
 # Simulation is restricted to toplogies that are observed experimentally
 # Goal: Establish a baseline for reconstruction accuracy
 
+library(data.table)
+library(dplyr)
+library(ape)
+library(data.tree)
+library(stringr)
+library(cluster)
+library(phangorn)
+
+#source('../GIT/MLfunctions2.R')
 
 # Set up the full path for the data
 # Barcode data is in the folder FISH/
@@ -27,25 +37,25 @@ if(length(grep("linux",read.table("../os.txt")$V1))){
 # use the 10mer (10 recording units) and simulate the edits with experimentally-measured parameteres
 # parameters are trit-dependent and therefore each unit has its own mu, alpha
 
-# old functions (simplified for this particular situation)
-mutationScratchpad_2019 <- function(barcode,mu,alpha,type='trit',recType="integrase",cInts=1,tInts=1,chr.acc=c()){
-
-  originalBarcode=strsplit(barcode,"")[[1]]
-  #now a is an array of char elements representing the scratchpad
-  m_event<-runif(1,0,1)
-  #mutation happens (rate = mutations/generation)
-  #for each element in the array, ask if mutation happens
-  #with constant independent rate (mutation in [1] does not affect [2])
-  if(recType=="integrase"){
-    mutatedBarcode=recIntegrase(originalBarcode,mu=mu,alpha=alpha,type=type,currentInts=cInts,totalInts=tInts)
-  }else if(recType=="epimemoir"){ #epimemoir
-    mutatedBarcode=recEpiMemoir(originalBarcode,mu=mu,alpha=alpha,type=type,totalInts=tInts,chr.acc=chr.acc)
-  }else { #no mutation
-    mutatedBarcode= originalBarcode
-  }
-  #returns the mutated string
-
-}
+# # old functions (simplified for this particular situation)
+# mutationScratchpad_2019 <- function(barcode,mu,alpha,type='trit',recType="integrase",cInts=1,tInts=1,chr.acc=c()){
+#
+#   originalBarcode=strsplit(barcode,"")[[1]]
+#   #now a is an array of char elements representing the scratchpad
+#   m_event<-runif(1,0,1)
+#   #mutation happens (rate = mutations/generation)
+#   #for each element in the array, ask if mutation happens
+#   #with constant independent rate (mutation in [1] does not affect [2])
+#   if(recType=="integrase"){
+#     mutatedBarcode=recIntegrase(originalBarcode,mu=mu,alpha=alpha,type=type,currentInts=cInts,totalInts=tInts)
+#   }else if(recType=="epimemoir"){ #epimemoir
+#     mutatedBarcode=recEpiMemoir(originalBarcode,mu=mu,alpha=alpha,type=type,totalInts=tInts,chr.acc=chr.acc)
+#   }else { #no mutation
+#     mutatedBarcode= originalBarcode
+#   }
+#   #returns the mutated string
+#
+# }
 
 recIntegrase_2019<-function(barcode,mu,alpha,type = "trit"){
 
@@ -86,6 +96,52 @@ recIntegrase_2019<-function(barcode,mu,alpha,type = "trit"){
 }
 
 
+# Get the data.tree object ready starting from a phylo object (ground truth)
+# returns this_node
+initSimulation<-function(ground_truth, initial_barcode = "1111111111"){
+
+  # name the internal nodes before converting
+  ground_truth<-makeNodeLabel(ground_truth,prefix="")
+  # convert to data.tree
+  ground_node = as.Node(ground_truth)
+  # check that things are correct then assign the barcode state to the first cell
+  if(ground_node$isRoot)
+    ground_node$barcode = initial_barcode
+
+  return(ground_node)
+
+
+}
+
+# Main Function to simulate recording over an exisiting lineage
+# returns ground_sim
+simulateGroundTruth <- function(this_node,mu,alpha){
+
+  if(this_node$isLeaf){
+    return()
+  }else{
+    #set the new barcode by simulating a cell division recording
+    this_node$children[[1]]$barcode = recIntegrase_2019(this_node$barcode,mu,alpha)
+    this_node$children[[2]]$barcode = recIntegrase_2019(this_node$barcode,mu,alpha)
+
+    # set the barcode as the name for the node
+  #  this_node$children[[1]]$name =   this_node$children[[1]]$barcode
+  #  this_node$children[[2]]$name =   this_node$children[[2]]$barcode
+
+
+    simulateGroundTruth(this_node$children[[1]],mu,alpha)
+    simulateGroundTruth(this_node$children[[2]],mu,alpha)
+
+  }
+
+  return(this_node)
+}
+
+
+# END MAIN SIMULATION
+
+
+
 
 # GLOBAL parameters:
 #Experimentally measured edit rates per site
@@ -108,14 +164,43 @@ alpha = params_global[[2]]
 
 # Main function to get a distance from a simulated lineage
 # Run it many times to get a histogram / average dist for THIS ground_truth
-pipelineSim<-function(ground_truth,mu,alpha){
+pipelineSim<-function(ground_truth,mu,alpha,return.tree = F,n_barcodes = 10){
 
-  d = initSimulation(ground_truth) %>%
-        simulateGroundTruth(mu = mu, alpha = alpha) %>%
-          convertToPhylo(ground_truth = ground_truth) %>%
-            reconstructSimulation(mu = mu, alpha = alpha)
+
+  if(n_barcodes>10){
+      mu = rep(mu, ceiling(n_barcodes/10))
+      alpha = rep(alpha,ceiling(n_barcodes/10))
+  }
+  initial_barcode = paste(rep("1",n_barcodes),collapse="")
+
+  if(return.tree ==F){
+    d = initSimulation(ground_truth,initial_barcode) %>%
+          simulateGroundTruth(mu = mu, alpha = alpha) %>%
+            convertToPhylo(ground_truth = ground_truth) %>%
+              reconstructSimulation(mu = mu, alpha = alpha)
+  }else{
+    #return the simulated tree
+    d = initSimulation(ground_truth,initial_barcode) %>%
+          simulateGroundTruth(mu = mu, alpha = alpha) %>%
+            convertToPhylo(ground_truth = ground_truth)
+
+  }
+
   return(d)
 }
+
+# parallel version of the simulation for a fixed lineage:
+# For testing scanning parameters (edit rate, or barcodes)
+parallelPipelineSim<-function(ground_truth =list(),n_barcodes = 10,edit_rate = 0.1, nsim =100){
+
+
+  ground_reps_score = c();
+  for(i in 1:nsim){
+      ground_reps_score[i] = pipelineSim(ground_truth,rep(edit_rate,50),rep(0.5,50),n_barcodes = n_barcodes )
+  }
+  return(ground_reps_score)
+}
+
 
 
 # UPDATE Sep 16th 2019
@@ -127,7 +212,7 @@ pipelineSim<-function(ground_truth,mu,alpha){
 # memoirData includes only trees that have been filtered by quality / number of cells
 
 # if MEMO mode is T , then we remove duplicated barcodes and reconstruct the lineage of "clones"
-runAllMetrics<-function(id,memoirData = c(), n_repeats=10,n_barcodes=10,MEMO = F){
+runAllMetrics<-function(id,memoirData = c(), n_repeats=50,n_barcodes=10,MEMO = F){
   print(paste( "processing tree", toString(id)))
   # in memoirData, lineages with 3 cells have score NA
   if(!MEMO){
@@ -212,50 +297,6 @@ runAllMetrics_v0.1<-function(id, n_repeats =10,n_barcodes=10){
       return(NULL)
   }
 }
-
-# Get the data.tree object ready starting from a phylo object (ground truth)
-# returns this_node
-initSimulation<-function(ground_truth, initial_barcode = "1111111111"){
-
-  # name the internal nodes before converting
-  ground_truth<-makeNodeLabel(ground_truth,prefix="")
-  # convert to data.tree
-  ground_node = as.Node(ground_truth)
-  # check that things are correct then assign the barcode state to the first cell
-  if(ground_node$isRoot)
-    ground_node$barcode = initial_barcode
-
-  return(ground_node)
-
-
-}
-
-# Main Function to simulate recording over an exisiting lineage
-# returns ground_sim
-simulateGroundTruth <- function(this_node,mu,alpha){
-
-  if(this_node$isLeaf){
-    return()
-  }else{
-    #set the new barcode by simulating a cell division recording
-    this_node$children[[1]]$barcode = recIntegrase_2019(this_node$barcode,mu,alpha)
-    this_node$children[[2]]$barcode = recIntegrase_2019(this_node$barcode,mu,alpha)
-
-    # set the barcode as the name for the node
-  #  this_node$children[[1]]$name =   this_node$children[[1]]$barcode
-  #  this_node$children[[2]]$name =   this_node$children[[2]]$barcode
-
-
-    simulateGroundTruth(this_node$children[[1]],mu,alpha)
-    simulateGroundTruth(this_node$children[[2]],mu,alpha)
-
-  }
-
-  return(this_node)
-}
-
-
-# END MAIN SIMULATION
 
 
 #
@@ -389,7 +430,7 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_t
   if(!return_tree){
     return(this.score)
   }else{
-    return(list(new.alive.tree,new.tree,this.score))
+    return(list(new.alive.tree)) #,new.tree,this.score))
   }
 }
 
@@ -468,16 +509,38 @@ makePlotAccuracy<-function(plot.only = T,nrepeats=10){
 
 #simple calculation of shannon entropy per site
 # Returns the vector for entropies for each site
-barcodeEntropy<-function( ground_truth ){
+barcodeEntropy<-function( ground_truth, matrix_entropy = F ){
 
   barcodes = str_split(ground_truth$tip.label,"_",simplify=T)[,2]
   barcode_matrix<-do.call(rbind,lapply(lapply(barcodes,str_split,"",simplify=T),as.numeric))
+  h = c()
 
-  for(i in 1:dim(barcode_matrix)[2]){
-      h[i]=entropy(table(barcode_matrix[,i])/dim(barcode_matrix)[1])
+  if(matrix_entropy){
+    return(entropy(barcode_matrix))
+  }else{
+
+    for(i in 1:dim(barcode_matrix)[2]){
+        h[i]=entropy::entropy(table(barcode_matrix[,i])/dim(barcode_matrix)[1])
+      }
+    return(h)
   }
+}
 
-  return(h)
+# within a lineage, calculate the muatual information between the barcode states
+barcodesMI<-function(ground_truth){
+  barcodes = str_split(ground_truth$tip.label,"_",simplify=T)[,2]
+  barcode_matrix<-do.call(rbind,lapply(lapply(barcodes,str_split,"",simplify=T),as.numeric))
+  n_barcodes = dim(barcode_matrix)[2]
+
+  # sum off diagonal values of the MI matrix, barcodes vs barcodes
+  return(  sum(mutinformation(as.data.frame(barcode_matrix),method = 'emp')[upper.tri(matrix(0,n_barcodes,n_barcodes))]) )
+
+}
+
+barcodeEntropyString<-function(ground_truth){
+  phylo_ground=read.newick( text = as.character( ground_truth))
+  return(barcodeEntropy(phylo_ground) )
+
 }
 
 entropyAllTrees<-function(i){
@@ -499,4 +562,64 @@ entropyAllTrees<-function(i){
       return(NULL)
     }
 
+}
+
+# Jan 2020
+# # Entropy for simulated lineage:
+stringToPhylo <- function(x){ read.newick(text = x) }
+editRatePhylo <- function(x){
+  tip_list<-lapply(x$tip.label,str_split,'_')
+  barcode_list = do.call(rbind,lapply(tip_list,unlist))[,2]
+  barcode_matrix = do.call(rbind,lapply(barcode_list,str_split,'',simplify = T))
+  return(1-sum(barcode_matrix =='1')/ length(barcode_matrix))
+ }
+
+entropySimulation<-function(memoirData){
+
+  phyloList<-lapply(memoirData$MEMOtrees, stringToPhylo)
+  sim_phyloList = lapply(phyloList,pipelineSim,mu,alpha,return.tree = T)
+
+  entropy_mat_sim = do.call(rbind,lapply(sim_phyloList,barcodeEntropy))
+  entropy_mat_sim2 = do.call(rbind,lapply(sim_phyloList,barcodeEntropy,matrix_entropy=T))
+
+  entropy_sum_sim =  rowSums(entropy_mat_sim)
+
+  #calculate edit rate for simulated trees
+  edit_rates = unlist(lapply(sim_phyloList,editRatePhylo))
+
+  raw_entropy  = entropy_sum_sim
+  raw_entropy_mat = entropy_mat_sim
+  norm_entropy = entropy_sum_sim * edit_rates
+
+  colony_size= unlist(lapply(memoirData$MEMOtrees,n_leaves))
+
+  entropy_df = data.frame(colony_size = colony_size, entropy = norm_entropy,edit = edit_rates, raw_entropy = raw_entropy, raw_entropy2=raw_entropy_mat)
+
+  entropy_df$rec_score = rep(NA,dim(entropy_df)[1])
+
+  large_trees = sim_phyloList[entropy_df$colony_size>3]
+  rec_scores_large_trees =unlist(lapply(large_trees,reconstructSimulation,mu,alpha))
+
+  entropy_df$rec_score[entropy_df$colony_size>3] = rec_scores_large_trees
+
+  return(entropy_df)
+
+}
+
+makeEntropyPlots<-function(entropy_res,entro_threshold= 2.3){
+
+
+  max_memoir_ecdf = ecdf(entropy_res$rec_score[entropy_res$entropy <entro_threshold & entropy_res$rec_score >=0])
+  low_memoir_ecdf = ecdf(entropy_res$rec_score[entropy_res$entropy >=entro_threshold & entropy_res$rec_score >=0])
+  all_memoir_ecdf = ecdf( entropy_res$rec_score[ entropy_res$rec_score>=0] )
+
+
+  ax = seq(0,1,0.001)
+  plot(ax,all_memoir_ecdf(ax),lwd = 3,type= 'l',col = 'gray',
+        ylab = "Fraction of colonies",xlab='RF score',main="Barcode entropy predict reconstruction accuracy",
+        cex = 1.2,cex.lab = 1.7, cex.axis = 1.3)
+  lines(ax,low_memoir_ecdf(ax),lwd = 3,type= 'l',col = 'red')
+  lines(ax,max_memoir_ecdf(ax),lwd = 3,type= 'l',col = 'blue')
+
+  legend(0.01,0.9, legend = c('All','L MEMOIR','H MEMOIR'), fill = c('gray','red','blue' ))
 }
