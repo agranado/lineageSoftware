@@ -16,6 +16,11 @@
 #mu=1/5
 #alpha= 2/3;
 
+library(phangorn)
+library(stringdist)
+source("simulation2.R")
+source("MLfunctions.R")
+
 compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
   
   
@@ -38,11 +43,12 @@ eq.zero<-function(r,x){sum(r[,x]==0)}
 #use the same format as before but testing different methods included in the stringdist function
 simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   #load necessary libraries and functions
-  library(phangorn)
-  library(stringdist)
-  source("/Users/alejandrog/MEGA/Caltech/trees/GIT/simulation2.R")
-  pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
-  pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
+ 
+  
+  pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
+  pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
+  
+  
   
   #clear the variable (since it behaves as global)
   if(exists("firstCell")){
@@ -67,8 +73,8 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   }
   
   #prints only the barcodes for all leaves
-  print(firstCell,"barcode")
-  print("Tree simulation completed")
+#  print(firstCell,"barcode")
+#  print("Tree simulation completed")
   #save to file as newick tree
   #save the length of branches plus the ID (which so far is a number)
   newickTree<-ToNewick(firstCell)
@@ -86,7 +92,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   trueTree<-read.tree(file=firstCellFile)
   
   #file is now deleted
-  print("True tree read")
+#  print("True tree read")
   # plot(trueTree,main=paste("True tree ",sep=""))
   
   #get the sequences from the simulated tree + names
@@ -119,7 +125,7 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   fasIN = paste(fasIN,fasID,".fas",sep="")
   
   write(fastaBarcodes,file=fasIN)
-  print("writting fasta file, simulated tree")
+#  print("writting fasta file, simulated tree")
   #this is the format:
   #>1_uuuuuu
   #uuuuuu
@@ -186,13 +192,13 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   
   #Apr 9th
   #Manual distance calculation (v beta1.0)
-  matdist = manualDist(barcodeLeaves,mu,alpha,nGen)
-  manualTree =upgma(as.dist(t(exp(matdist))))
+  matdist = manualDistML(barcodeLeaves,mu,alpha,nGen)
+  manualTree =upgma(as.dist(t(matdist)))
   manualTree$tip.label= treeUPGMA$tip.label
   
   allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
   
-  print("All distances calcualted")
+#  print("All distances calcualted")
   
   
   #delete files
@@ -324,7 +330,7 @@ manualDist <- function(barcodeLeaves,mu,alpha,nGen){
               
             }
             ratio.sum = ratio.sum + Pr_sister/Pr.sust
-            # ratio.product = ratio.product* Pr_sister#Pr.sust
+           # ratio.product = ratio.product* Pr_sister#Pr.sust
             #none of them is u AND they are different
           }else if(length(which(b==FALSE))==2){
             distSum = distSum + twoSust *Pr.sust
@@ -371,5 +377,5 @@ runThisScript <- function (){
 #GIT update for analyzing performance of reconstruction method with simulated data. 
 #these updates happened before the comparison between binary and tri simulations
 # code section for ATOM execution and examples
-registerDoParallel()
-results<-compareDist()
+#registerDoParallel(1)
+#results<-compareDist()

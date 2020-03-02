@@ -9,28 +9,33 @@
 
 rm(list=ls())
 library(doParallel)
-source("simMemoirStrDist.R")
+source("simMemoirStrDist2.R")
 source("simulation2.R")
-registerDoParallel(cores=36)
+registerDoParallel(cores=32)
 
 #SET PARAMETERS
-barcodes = c(2,4,6,8,10,15,20,25,50,100)
-#barcodes= c(2,3)
-generations=c(3,4,5,6,7,8)
-#generations=c(3,4)
-mus = c(0.999999999,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.000000001)
+barcodes = c(10,20,30,50,60,70,100,150)
+barcodes= c(100)
+generations=c(10,12,15)
+#generations=c(8)
+mus = c(0.3,0.2,0.1,0.05,0.01)
 #mus = c(0.7)#,0.6)#,0.5,0.4,0.2,0.1)
-#mus =c(1)
+mus =c(0.2,0.1)
 #barcodes = c(6,7)
 #generations = c(7,8)
-nRepeats=100
+nRepeats=32
 
 types=c('binary','trit')
-#types=c('trit')
+types=c('trit')
 
 #RUN CODE
 muVariation=list()
 for(m in 1:length(mus)){
+  
+  start_time =Sys.time()
+  print(paste("Start time:", as.character(start_time)) )
+  
+  
   simType=list()
   mu=mus[m]
   for(st in 1:length(types)){  
@@ -41,7 +46,7 @@ for(m in 1:length(mus)){
        genData=list()
        for(ng in 1:length(generations)){
           nGen=generations[ng]
-          genData[[ng]]= compareDist(simulationType=simulationType,alpha_=2/3,nGen=nGen,barcodeLength=barcodeLength,mu=mu,nRepeats=nRepeats)
+          genData[[ng]]= compareDist(simulationType=simulationType,alpha_=1/2,nGen=nGen,barcodeLength=barcodeLength,mu=mu,nRepeats=nRepeats)
           print(paste("sim mu=",toString(mu),"; ",simulationType," nG=",toString(nGen)," BC=",toString(barcodeLength),sep=""))
        }
        barcodeData[[bc]]=genData

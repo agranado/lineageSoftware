@@ -369,4 +369,4 @@ runThisScript <- function (){
 #these updates happened before the comparison between binary and tri simulations
 # code section for ATOM execution and examples
 #registerDoParallel()
-#results<-compareDist()
+results<-compareDist()
