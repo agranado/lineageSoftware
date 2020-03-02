@@ -367,9 +367,10 @@ reconstructSimulation<-function(ground_phylo,mu,alpha,return_tree = F){
 # Only when the MEMO trees are less than min.memo.tree cells, we are going to reconstruct the barcodes again
 # DIANA clustering might be biased when too many identical genotypes
 # min.memo.tree = 3 means NO second round of reconstruction DEFAULT
-reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_tree = F,min.memo.tree = 3,nGen = 4){
+reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_tree = F,
+    min.memo.tree = 3,nGen = 4, rooted = T){
 
-  unique.genotypes = unique(substr(manualTree$tip.label,4,14))
+  unique.genotypes = unique(do.call(rbind,str_split(manualTree$tip.label,"_"))[,2])
 
   # check that tree has more that two unique leafs
   if(length(unique.genotypes)>2){
@@ -377,7 +378,7 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_t
     new.tree = manualTree
     new.alive.tree = ground_phylo
         for(g in 1:length(unique.genotypes)){
-            drop.leaves = manualTree$tip.label[grep(unique.genotypes[g],manualTree$tip.label)]
+            drop.leaves = ground_phylo$tip.label[grep(unique.genotypes[g],ground_phylo$tip.label)]
             #delete all except one
 
             if(length(drop.leaves)>1){
@@ -399,7 +400,7 @@ reconstructMembow<-function(ground_phylo, manualTree,estimMu,estimAlpha,return_t
           if(length(new.alive.tree$tip.label)< min.memo.tree)
             new.tree = reconstructLineage(new.alive.tree,mu,alpha,return_tree=T,clust.method="ward.D2",nGen = nGen)
 
-          this.score = 1-RF.dist(new.tree,new.alive.tree,normalize = T)
+          this.score = 1-RF.dist(new.tree,new.alive.tree,normalize = T,rooted = rooted)
         }else{this.score = -1}
         #now we have trees with unique leaves
         # barcodes_ = new.tree$tip.label
