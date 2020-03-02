@@ -11,7 +11,20 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   #load necessary libraries and functions
   library(phangorn)
   source("simulation2.R")
-  pathName= "/Users/alejandrog/MEGA/Caltech/trees/simulation/"
+  
+  
+  
+  os=system("cat ../os.txt",intern = T)
+  if(os=="mac"){ #local Alejandro's laptop
+    pathName="/Users/alejandrog/MEGA/Caltech/trees/simulation/"
+    pathName2="/Users/alejandrog/MEGA/Caltech/trees/simulation"
+  }else if(os=="linux"){ #AWS server or any other linux machine (path is for AWS)
+    pathName="/home/ubuntu/alejandrog/Caltech/lineage/"
+    pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
+    
+  }
+  
+  
   #Estimate ML trees:
   #ML trees does not significantly increase the performance of lineage reconstruction
   #It does, actually, performa way worse than normal upgma/distance methods. 
@@ -22,7 +35,7 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   
   
   #clear the variable (since it behaves as global)
-  if(!exists("firstCell")){
+  if(exists("firstCell")){
     rm(firstCell)
   }
   #create intialize the tree using 1 as the ID
@@ -45,7 +58,7 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   }
   
   #prints only the barcodes for all leaves
-  print(firstCell,"barcode")
+ # print(firstCell,"barcode")
   print("Tree simulation completed")
   #save to file as newick tree
   #save the length of branches plus the ID (which so far is a number)
@@ -65,7 +78,7 @@ simMemoirRandomGuess<-function(nGen,mu,alpha,barcodeLength,nRand){
   randDist = array()
   for (r in 1:nRand){
     randomTrue<- randomTrueTree(trueTree)
-    randDist[r]=treedist(randomTrue,trueTree)
+    randDist[r]=RF.dist(randomTrue,trueTree)
   }
   
   

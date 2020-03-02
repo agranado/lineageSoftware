@@ -84,7 +84,7 @@ hc=as.hclust(reverseLabels(treeUPGMA))
           #rect = TRUE, rect_border = "jco", rect_fill = TRUE,xlab="time",ylab="cells")
 
 #estimate parameteres
-#statistical analysis of barcode editting 
+#statistical analysis of barcode editting
 unique.BC.matrix=do.call(rbind, apply(t(as.character(unique(barcodes))),1,strsplit,"")[[1]]  )
 meanFreq= baseFreq(unique.BC.matrix)
 #estimated frequency of r

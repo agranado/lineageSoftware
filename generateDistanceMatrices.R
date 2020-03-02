@@ -17,35 +17,59 @@
 #alpha= 2/3;
 
 library(phangorn)
-library(stringdist)
-
 library(doParallel)
+library(gplots)
+source("MLfunctions.R")
 source("simulation2.R")
 
 
-compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
+rand.dist<-c(10,26,  58, 120, 250, 506)
+
+
+convertMatrixToKeras<-function(trainingMatrix,n,p){
+  mnist=list()
+  
+  test.size=length(trainingMatrix)-round(length(trainingMatrix) * p)
+  train.size=round(length(trainingMatrix) * p)
   
   
-  results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist(nGen=nGen,mu=mu,alpha=alpha_,barcodeLength=barcodeLength,methods=methods,simulationType=simulationType)
-  results.matrix=do.call(rbind,results)
-  #Optional when only interested in the mean
-  #apply(results.matrix,2,mean)
-  return(results.matrix)
+  temp.x = array(0,dim=c(train.size,n,n))
+  for(i in 1:round(length(trainingMatrix) * p)){
+    mnist$train$y[i]=  as.numeric(trainingMatrix[[i]][[1]]==0)
+    temp.x[i,,]= trainingMatrix[[i]][[2]]
+  }
+  mnist$train$x = temp.x
+  
+  
+ 
+  temp.x = array(0,dim=c( test.size  ,n,n))
+  
+  for(j in 1:test.size){
+    i = j + train.size
+    mnist$test$y[j] = as.numeric( trainingMatrix[[i]][[1]] ==0)
+    temp.x[j,,]= trainingMatrix[[i]][[2]]
+  }
+  mnist$test$x = temp.x
+  
+  return(mnist)
 }
 
-#functions to use the proportion of perfect trees as the measure. 
-#May 8
-eq.zero<-function(r,x){sum(r[,x]==0)}
+generateTrainingData <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=1/2,barcodeLength=10,nRepeats=20){
+  results= foreach(i=1:nRepeats) %dopar% simMemoirDistMat(nGen=nGen,mu=mu,alpha=alpha_,barcodeLength=barcodeLength,simulationType=simulationType)
+  #results.matrix=do.call(rbind,results)
+  #Optional when only interested in the mean
+  #apply(results.matrix,2,mean)
+  return(results)
+}
 
 
 
-
+#nGen=3;mu=0.4;alpha=1/2;barcodeLength=10;methods=c();simulationType='trit';
 #April 8th
 #Test stringdistance measures using the stringdist R library
 #use the same format as before but testing different methods included in the stringdist function
-simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
+simMemoirDistMat<-function(nGen=3,mu=0.4,alpha=1/2,barcodeLength=10,simulationType='trit'){
   #load necessary libraries and functions
-
   #detection of OS 
   
   #update (trying to create a single branch that works in AWS and in my laptop)
@@ -58,7 +82,6 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
     pathName2="/home/ubuntu/alejandrog/Caltech/lineage"
     
   }
-
   #clear the variable (since it behaves as global)
   if(exists("firstCell")){
     rm(firstCell)
@@ -82,26 +105,32 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   }
   
   #prints only the barcodes for all leaves
-#  print(firstCell,"barcode")
-#  print("Tree simulation completed")
+  #  print(firstCell,"barcode")
+  #  print("Tree simulation completed")
   #save to file as newick tree
   #save the length of branches plus the ID (which so far is a number)
   newickTree<-ToNewick(firstCell)
   #Generate unique ID for writing file to disc (we'll erase it later)
-  fileID = toString(runif(1))
+  #fileID = toString(runif(1))
   
   #firstCellFile = paste(pathName,"trees/firstCell",fileID,".nwk",sep="")
   
-  firstCellFile =tempfile("trees/firstCell",tmpdir = pathName2)
-  firstCellFile =paste(firstCellFile,fileID,".nwk",sep="")
+  #firstCellFile =tempfile("trees/firstCell",tmpdir = pathName2)
+  #firstCellFile =paste(firstCellFile,fileID,".nwk",sep="")
   
   
-  write(newickTree,file=firstCellFile)
+  #write(newickTree,file=firstCellFile)
   #load the tree from the file as a tree structure.
-  trueTree<-read.tree(file=firstCellFile)
+  #trueTree<-read.tree(file=firstCellFile)
+  
+  
+  #alternatively: use read.tree with the text argument instead of writting to disc. should be faster
+  trueTree<-read.tree(text=newickTree)
+  
+  
   
   #file is now deleted
-#  print("True tree read")
+  #  print("True tree read")
   # plot(trueTree,main=paste("True tree ",sep=""))
   
   #get the sequences from the simulated tree + names
@@ -123,18 +152,18 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   names(barcodeLeaves)<-namesLeaves
   #now barcodeLeaves has all the leaves of the tree, with their original ID from the data.tree structure.
   #create Fasta file using only the leaves of the tree (n= 2^g)
-  fastaBarcodes<-convertSimToFasta(barcodeLeaves)
-  #convert name of variable to string
-  
-  #3  varName<-deparse(substitute(firstCell))
-  
-  fasID =toString(runif(1))
-  #fasIN <-paste(pathName,"fasta/firstCell_",fasID,".fas",sep="")
-  fasIN =tempfile("fasta/firstCell",tmpdir = pathName2)
-  fasIN = paste(fasIN,fasID,".fas",sep="")
-  
-  write(fastaBarcodes,file=fasIN)
-#  print("writting fasta file, simulated tree")
+  # fastaBarcodes<-convertSimToFasta(barcodeLeaves)
+  # #convert name of variable to string
+  # 
+  # #3  varName<-deparse(substitute(firstCell))
+  # 
+  # fasID =toString(runif(1))
+  # #fasIN <-paste(pathName,"fasta/firstCell_",fasID,".fas",sep="")
+  # fasIN =tempfile("fasta/firstCell",tmpdir = pathName2)
+  # fasIN = paste(fasIN,fasID,".fas",sep="")
+  # 
+  # write(fastaBarcodes,file=fasIN)
+  #  print("writting fasta file, simulated tree")
   #this is the format:
   #>1_uuuuuu
   #uuuuuu
@@ -168,70 +197,87 @@ simMemoirStrdist<-function(nGen,mu,alpha,barcodeLength,methods,simulationType){
   
   #we can apply lineage reconstruction here so later we can compare with the real tree.
   #before loading the fasta file we need to convert the characters to DNA, so that it is compatible
-  #sed.return ==1 if replacement went through (Apr 25)
-  sed.return<-convertMemoirToDNA(fasIN)
-  #now we can use the phyDat
-  if(sed.return){
-    memoirfas<-read.phyDat(fasIN,format="fasta",type="DNA")
-    #for distance based trees
-    #from the phangorn tutorial pdf:
-  }
+  # #sed.return ==1 if replacement went through (Apr 25)
+  # sed.return<-convertMemoirToDNA(fasIN)
+  # #now we can use the phyDat
+  # if(sed.return){
+  #   memoirfas<-read.phyDat(fasIN,format="fasta",type="DNA")
+  #   #for distance based trees
+  #   #from the phangorn tutorial pdf:
+  # }
   #Apr 8th: this is where the distance comes into place
   
   #Apr 8th:
   #we calculate string distances only for the leaves ( which is the data we actually get)
-  
-  allDistances = array()
-  for(m in 1:length(methods)){
-    stringTree= upgma(stringdistmatrix(barcodeLeaves,method=methods[m]))
-    stringTree$tip.label<-trueTree$tip.label
-    allDistances[m]= RF.dist(stringTree,trueTree)
-  }
+  # 
+  # allDistances = array()
+  # for(m in 1:length(methods)){
+  #   stringTree= upgma(stringdistmatrix(barcodeLeaves,method=methods[m]))
+  #   stringTree$tip.label<-trueTree$tip.label
+  #   allDistances[m]= RF.dist(stringTree,trueTree)
+  # }
   
   #control against default dist.ml function + UPGMA, which so far is the best method
-  if(sed.return==1){
-    dm<-dist.ml(memoirfas)
-    dm.ham=dist.hamming(memoirfas)
-    treeUPGMA<-upgma(dm)
-    treeUPGMA_noSeq<-removeSeqLabel(treeUPGMA)
-    allDistances[m+1]= RF.dist(treeUPGMA_noSeq,trueTree)
-  }else{
-    allDistances[m+1]= NaN
-  }
+  # m=0
+  # if(sed.return==1){
+  #   dm<-dist.ml(memoirfas)
+  #   dm.ham=dist.hamming(memoirfas)
+  #   treeUPGMA<-upgma(dm)
+  #   treeUPGMA_noSeq<-removeSeqLabel(treeUPGMA)
+  #   allDistances[m+1]= RF.dist(treeUPGMA_noSeq,trueTree)
+  # }else{
+  #   allDistances[m+1]= NaN
+  # }
   
   #Apr 9th
   #Manual distance calculation (v beta1.0)
-
-#  matdist = manualDist(barcodeLeaves,mu,alpha,nGen)
-#  manualTree =upgma(as.dist(t(matdist)))
-#  manualTree$tip.label= treeUPGMA$tip.label
+  #  matdist = manualDist(barcodeLeaves,mu,alpha,nGen)
+  #  manualTree =upgma(as.dist(t(matdist)))
+  #  manualTree$tip.label= treeUPGMA$tip.label
   
-#  allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
+  #  allDistances[m+2]= RF.dist(removeSeqLabel(manualTree),trueTree)
   
-  allDistances[m+2]=0
+  # allDistances[m+2]=0
   
   #manualdist from MLfunctinos.R
   
   matdist_ = manualDistML(barcodeLeaves,mu,alpha,nGen)
-  manualTree_ =upgma(as.dist(t(matdist_)))
-  manualTree_$tip.label= treeUPGMA$tip.label
+  # manualTree_ =upgma(as.dist(t(matdist_)))
+  # manualTree_$tip.label= treeUPGMA$tip.label
+  # 
+  # allDistances[m+2]= RF.dist(removeSeqLabel(manualTree_),trueTree)
+  # 
+  #try new distance using the built in dendrogram of heatmap2
+  #h=heatmap.2(matdist_,trace="none",dendrogram = 'column')
+  # h=heatmap.2(matdist_+t(matdist_),Colv="Rowv")
+  # heatmap.tree=as.phylo(as.hclust(h$colDendrogram))
+  # heatmap.tree$tip.label = treeUPGMA$tip.label
+  # allDistances[m+3]= RF.dist(removeSeqLabel(heatmap.tree),trueTree)
   
-  allDistances[m+3]= RF.dist(removeSeqLabel(manualTree_),trueTree)
-
-#  print("All distances calcualted")
+  #alternative w/o plotting the actual heatmap, only hclust method
+  hclust.tree=as.phylo(hclust(as.dist(t(matdist_))))
+  hclust.tree$tip.label = treeUPGMA$tip.label
+  tree.dist= RF.dist(removeSeqLabel(hclust.tree),trueTree) #object to be returned
   
+ # print("All distances calcualted")
+  
+  # allDistances[m+5] = calcDstRF(as(removeSeqLabel(treeUPGMA),'TreeMan'),as(trueTree,'TreeMan'))   
+  # allDistances[m+6] = calcDstRF(as(removeSeqLabel(manualTree_),'TreeMan'),as(trueTree,'TreeMan')) 
+  # allDistances[m+7] = calcDstRF(as(removeSeqLabel(heatmap.tree),'TreeMan'),as(trueTree,'TreeMan')) 
+  # allDistances[m+8] = calcDstRF(as(removeSeqLabel(hclust.tree),'TreeMan'),as(trueTree,'TreeMan')) 
+  # allDistances  
   
   #delete files
   
-  system(paste("rm ",firstCellFile,sep=""))
-  if(sed.return){
-    system(paste("rm ",paste(fasIN,".bak",sep=""),sep=""))
-    system(paste("rm ",fasIN,sep=""))
-  }
-  #system(paste("rm ",fasIN,".bak",sep=""))
+  # system(paste("rm ",firstCellFile,sep=""))
+  # if(sed.return){
+  #   system(paste("rm ",paste(fasIN,".bak",sep=""),sep=""))
+  #   system(paste("rm ",fasIN,sep=""))
+  # }
+  # #system(paste("rm ",fasIN,".bak",sep=""))
   
   
-  return(allDistances)
+  return(list(tree.dist,matdist_))
 }
 #END of simulation function 
 #Apr 9th
@@ -350,7 +396,7 @@ manualDist <- function(barcodeLeaves,mu,alpha,nGen){
               
             }
             ratio.sum = ratio.sum + Pr_sister/Pr.sust
-           # ratio.product = ratio.product* Pr_sister#Pr.sust
+            # ratio.product = ratio.product* Pr_sister#Pr.sust
             #none of them is u AND they are different
           }else if(length(which(b==FALSE))==2){
             distSum = distSum + twoSust *Pr.sust
@@ -397,5 +443,5 @@ runThisScript <- function (){
 #GIT update for analyzing performance of reconstruction method with simulated data. 
 #these updates happened before the comparison between binary and tri simulations
 # code section for ATOM execution and examples
-
+#registerDoParallel()
 #results<-compareDist()
