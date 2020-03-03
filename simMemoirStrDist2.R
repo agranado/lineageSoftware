@@ -21,10 +21,11 @@ library(stringdist)
 library(doParallel)
 source("simulation2.R")
 
-compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20,methods=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')){
+compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20){
 
 
-  results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist(nGen=nGen,mu=mu,alpha=alpha_,barcodeLength=barcodeLength,methods=methods,simulationType=simulationType)
+  results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist_2020(nGen=nGen,mu=mu,alpha=alpha_,barcodeLength=barcodeLength,simulationType=simulationType,
+                                                              write.newick = T)
   results.matrix=do.call(rbind,results)
   #Optional when only interested in the mean
   #apply(results.matrix,2,mean)
@@ -37,6 +38,19 @@ eq.zero<-function(r,x){sum(r[,x]==0)}
 
 
 
+
+
+# This function will get the barcode data from the simulated lineage
+printBarcodes<-function(ground_sim){
+  # Get all the leaves from the tree
+  a<-ground_sim$leaves
+  # For each leave, get the barcode
+  sim_barcodes=c()
+  for(i in 1:length(a)){
+    sim_barcodes[i] = a[[i]]$barcode
+  }
+  return(sim_barcodes)
+}
 
 #Mar 2nd 2020
 # Let's simplify this function
