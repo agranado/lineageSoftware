@@ -16,12 +16,12 @@ registerDoParallel(cores=32)
 
 #SET PARAMETERS
 barcodes = c(10,20,30,50,60,70,100,150)
-barcodes= c(100)
-generations=c(10)
+barcodes= c(10,20,30,50,70,80,100,150)
+generations=c(3,4,5,6,7,8,9,10)
 #generations=c(8)
 mus = c(0.3,0.2,0.1,0.05,0.01)
 #mus = c(0.7)#,0.6)#,0.5,0.4,0.2,0.1)
-mus =c(0.2,0.1)
+mus =c(0.1, 0.05, 0.01)
 #barcodes = c(6,7)
 #generations = c(7,8)
 nRepeats=32
