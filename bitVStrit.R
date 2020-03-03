@@ -11,12 +11,13 @@ rm(list=ls())
 library(doParallel)
 source("simMemoirStrDist2.R")
 source("simulation2.R")
+source("MLfunctions.R")
 registerDoParallel(cores=32)
 
 #SET PARAMETERS
 barcodes = c(10,20,30,50,60,70,100,150)
 barcodes= c(100)
-generations=c(10,12,15)
+generations=c(10)
 #generations=c(8)
 mus = c(0.3,0.2,0.1,0.05,0.01)
 #mus = c(0.7)#,0.6)#,0.5,0.4,0.2,0.1)
@@ -36,7 +37,7 @@ os=system("cat ../os.txt",intern = T)
 if(os=="mac"){
   registerDoParallel(cores=8)
 }else if(os=="linux"){
-  registerDoParallel(cores=6)
+  registerDoParallel(cores=32)
 }
 
 
