@@ -24,8 +24,10 @@ source("simulation2.R")
 compareDist <- function(simulationType='trit',nGen=3,mu=0.4,alpha_=2/3,barcodeLength=6,nRepeats=20){
 
 
-  results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist_2020(nGen=nGen,mu=mu,alpha=alpha_,barcodeLength=barcodeLength,simulationType=simulationType,
-                                                              write.newick = T)
+  results= foreach(i=1:nRepeats) %dopar% simMemoirStrdist_2020(nGen=nGen,mu=mu,alpha=alpha_,
+                                                               barcodeLength=barcodeLength,
+                                                               simulationType=simulationType,
+                                                               write.newick = T)
   results.matrix=do.call(rbind,results)
   #Optional when only interested in the mean
   #apply(results.matrix,2,mean)
@@ -101,16 +103,23 @@ simMemoirStrdist_2020<-function(nGen,mu,alpha,barcodeLength,simulationType,write
   ground_phylo$tip.label<-paste(as.character(1:length(barcodes)),"_", barcodes, sep ="")
   # rename the phylo OBJECT
   #manualdist from MLfunctinos.R
-  mu_array = rep(mu,barcodeLength)
-  alpha_array = rep(alpha,barcodeLength)
+  if(simulationType=='trit'){
+    mu_array = rep(mu,barcodeLength)
+    alpha_array = rep(alpha,barcodeLength)
+  }else{
+    mu_array = mu
+    alpha_array = alpha
+  }
 
-  aa = reconstructSimulation(ground_phylo,mu_array,alpha_array)
+  aa = reconstructSimulation(ground_phylo,mu_array,alpha_array,simulationType = simulationType)
+
+
 
   allDistances = c()
   allDistances[1] = 0
   allDistances[2] = aa
   if(write.newick){
-    write.tree(ground_phylo,file = paste(pathName,"2020trees/nG_",as.character(nGen),"_NBC_",as.character(barcodeLength),"mu_",as.character(mu),"_",as.character(runif(1)),".nwk",sep =""))
+    write.tree(ground_phylo,file = paste(pathName,"2020trees/",simulationType,"_nG_",as.character(nGen),"_NBC_",as.character(barcodeLength),"mu_",as.character(mu),"_",as.character(runif(1)),".nwk",sep =""))
   }
 
     return(allDistances)
@@ -118,7 +127,7 @@ simMemoirStrdist_2020<-function(nGen,mu,alpha,barcodeLength,simulationType,write
 
 
 
-reconstructSimulation<-function(ground_phylo,mu,alpha,return_tree = F){
+reconstructSimulation<-function(ground_phylo,mu,alpha,return_tree = F, simulationType = 'trit',rooted = F){
 
   #get the barcode and cell id (cell id is not neccessarily continuous numbers)
   barcodes = str_split(ground_phylo$tip.label,"_",simplify=T)[,2]
@@ -129,15 +138,27 @@ reconstructSimulation<-function(ground_phylo,mu,alpha,return_tree = F){
   barcodes_urx = barcodes
 
   #recontruct the tree
-  matdist_=manualDistML_2(as.character(barcodes_urx),mu = mu ,alpha = alpha,nGen = 4 )
+  if(simulationType=='trit'){
+    matdist_=manualDistML_2(as.character(barcodes_urx),mu = mu ,alpha = alpha,nGen = 4 )
+  }else{
+    matdist_ = manualDistML(as.character(barcodes_urx),mu = mu,alpha = alpha, nGen = 4)
+  }
 
-  row.names(matdist_)<- paste(cell_ids,barcodes,sep="_")
-  colnames(matdist_)<- paste(cell_ids,barcodes,sep="_")
+
+
+  # because the simulation names the cells in order (1,2,3..)
+  # cells with no recording (identical barcodes =="1") will cluster together
+  # increasing the accuracy score for bad trees, therefore we need to randomize
+  # cell with identical barcodes, to account for this artifact
+  # tHe function returns the barcodes pasted with cell_ids (randomized for uniques)
+  barcodes_fixed = randomizeUniqueBarcodes(barcodes,cell_ids)
+  row.names(matdist_)<-barcodes_fixed
+  colnames(matdist_)<- barcodes_fixed
 
   hclust.tree = as.phylo(as.hclust( diana(as.dist(t(matdist_)))))
 
   #here ground_phylo is "the ground truth" which is a simulation but this is what we want
-  d = 1- RF.dist(hclust.tree,ground_phylo,normalize =T)
+  d = 1- RF.dist(hclust.tree,ground_phylo,normalize =T,rooted = rooted)
   if(return_tree){
     return(hclust.tree)
   }else{
@@ -150,6 +171,20 @@ reconstructSimulation<-function(ground_phylo,mu,alpha,return_tree = F){
 
 
 
+randomizeUniqueBarcodes <-function(barcodes,cell_ids){
+
+  # We take groups of cells with identical barcodes
+  # Only if the group is larger than 2, otherwise they are sisters in their own clade and order does not matter
+  cladesOfUnique <- names(which(table(barcodes)>2))
+
+  for(uniques in cladesOfUnique){
+    cell_ids_idx =which(barcodes %in% uniques)
+    cell_ids[cell_ids_idx] = cell_ids[sample(cell_ids_idx)]
+
+    }
+
+    return(paste(cell_ids, barcodes,sep="_"))
+}
 
 
 
